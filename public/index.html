@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#0a4d6e">
+  <meta name="description" content="Real-time Jersey Shore beach rankings. Find the best beach right now.">
+  <title>ShoreCast — Find Your Best Jersey Shore Beach Right Now</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>ShoreCast</h1>
+    <p class="tagline">Best Jersey Shore beaches, ranked right now</p>
+    <p class="last-updated" id="lastUpdated">Loading…</p>
+  </header>
+
+  <main>
+    <div id="loading" class="loading">Checking the shore…</div>
+    <div id="error" class="error" hidden></div>
+    <ul id="beachList" class="beach-list"></ul>
+  </main>
+
+  <footer>
+    <p>Data refreshes every 15 minutes · Built in NJ</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
