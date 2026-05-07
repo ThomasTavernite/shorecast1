@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const BEACHES = require('./beaches');
+const { fetchAllWeather } = require('./weather');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,17 +13,21 @@ app.use(express.static(path.join(__dirname, 'public')));
 let beachCache = [];
 let lastUpdated = null;
 
-// Compute a mock ShoreScore for each beach (real scrapers come later)
-function computeShoreScores() {
+// Compute ShoreScore for each beach using real weather + mock for other factors
+async function computeShoreScores() {
+  const weatherMap = await fetchAllWeather();
+
   return BEACHES.map(beach => {
-    // Mock factors, 0-100 each
+    const wData = weatherMap[beach.id];
+    const weather = wData?.weatherScore ?? 50;
+    const weatherDetails = wData?.weather ?? null;
+
+    // Mock for now, real scrapers come next
     const water = 70 + Math.floor(Math.random() * 30);
     const surf = 50 + Math.floor(Math.random() * 50);
-    const weather = 60 + Math.floor(Math.random() * 40);
-    const crowd = 40 + Math.floor(Math.random() * 60); // higher = less crowded
+    const crowd = 40 + Math.floor(Math.random() * 60);
     const parking = 30 + Math.floor(Math.random() * 70);
 
-    // Weighted ShoreScore
     const shoreScore = Math.round(
       water * 0.30 +
       weather * 0.25 +
@@ -34,16 +39,21 @@ function computeShoreScores() {
     return {
       ...beach,
       shoreScore,
-      factors: { water, surf, weather, crowd, parking }
+      factors: { water, surf, weather, crowd, parking },
+      weatherDetails
     };
   }).sort((a, b) => b.shoreScore - a.shoreScore);
 }
 
 // Refresh cache
-function refreshCache() {
-  beachCache = computeShoreScores();
-  lastUpdated = new Date().toISOString();
-  console.log(`[${lastUpdated}] Cache refreshed, ${beachCache.length} beaches`);
+async function refreshCache() {
+  try {
+    beachCache = await computeShoreScores();
+    lastUpdated = new Date().toISOString();
+    console.log(`[${lastUpdated}] Cache refreshed, ${beachCache.length} beaches`);
+  } catch (err) {
+    console.error('Cache refresh failed:', err.message);
+  }
 }
 
 // Initial load

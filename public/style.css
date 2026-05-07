@@ -86,13 +86,8 @@ main {
   border: 1px solid var(--sand);
 }
 
-.beach-card:active {
-  transform: scale(0.98);
-}
-
-.beach-card.expanded {
-  box-shadow: 0 4px 16px rgba(10, 77, 110, 0.15);
-}
+.beach-card:active { transform: scale(0.98); }
+.beach-card.expanded { box-shadow: 0 4px 16px rgba(10, 77, 110, 0.15); }
 
 .beach-row {
   display: flex;
@@ -107,22 +102,9 @@ main {
   min-width: 24px;
 }
 
-.beach-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.beach-name {
-  font-weight: 600;
-  font-size: 1rem;
-  color: var(--text);
-}
-
-.beach-town {
-  font-size: 0.8rem;
-  color: var(--muted);
-  margin-top: 2px;
-}
+.beach-info { flex: 1; min-width: 0; }
+.beach-name { font-weight: 600; font-size: 1rem; color: var(--text); }
+.beach-town { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
 
 .score {
   font-size: 1.6rem;
@@ -144,6 +126,35 @@ main {
 }
 
 .beach-card.expanded .beach-details { display: block; }
+
+.weather-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(180deg, #eaf3f8 0%, #d8e9f1 100%);
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.w-icon { font-size: 1.8rem; line-height: 1; }
+.w-temp {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--deep);
+  font-variant-numeric: tabular-nums;
+}
+.w-label {
+  font-size: 0.95rem;
+  color: var(--deep);
+  font-weight: 500;
+}
+
+.weather-detail {
+  font-size: 0.75rem;
+  color: var(--muted);
+  padding: 0 2px 12px;
+}
 
 .factors {
   display: grid;

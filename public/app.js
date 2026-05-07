@@ -22,12 +22,52 @@ function timeAgo(iso) {
   return `${hrs} hr ago`;
 }
 
+// WMO weather codes -> friendly label + emoji
+function weatherLabel(code) {
+  const map = {
+    0: { icon: '☀️', label: 'Clear' },
+    1: { icon: '🌤️', label: 'Mostly sunny' },
+    2: { icon: '⛅', label: 'Partly cloudy' },
+    3: { icon: '☁️', label: 'Overcast' },
+    45: { icon: '🌫️', label: 'Foggy' },
+    48: { icon: '🌫️', label: 'Foggy' },
+    51: { icon: '🌦️', label: 'Light drizzle' },
+    53: { icon: '🌦️', label: 'Drizzle' },
+    55: { icon: '🌦️', label: 'Heavy drizzle' },
+    61: { icon: '🌧️', label: 'Light rain' },
+    63: { icon: '🌧️', label: 'Rain' },
+    65: { icon: '🌧️', label: 'Heavy rain' },
+    71: { icon: '🌨️', label: 'Light snow' },
+    73: { icon: '🌨️', label: 'Snow' },
+    75: { icon: '❄️', label: 'Heavy snow' },
+    80: { icon: '🌦️', label: 'Showers' },
+    81: { icon: '🌧️', label: 'Showers' },
+    82: { icon: '⛈️', label: 'Heavy showers' },
+    95: { icon: '⛈️', label: 'Thunderstorm' },
+    96: { icon: '⛈️', label: 'Storm w/ hail' },
+    99: { icon: '⛈️', label: 'Severe storm' }
+  };
+  return map[code] || { icon: '🌤️', label: 'Mild' };
+}
+
 function renderBeach(beach, rank) {
   const li = document.createElement('li');
   li.className = 'beach-card';
   li.dataset.id = beach.id;
 
   const cls = scoreClass(beach.shoreScore);
+  const w = beach.weatherDetails;
+  const wl = w ? weatherLabel(w.weatherCode) : null;
+
+  // Lead with air temp (Google-style), show feels-like only if it differs noticeably
+  const weatherSummary = w
+    ? `<span class="w-icon">${wl.icon}</span><span class="w-temp">${w.tempF}°</span><span class="w-label">${wl.label}</span>`
+    : `<span class="w-label">Weather unavailable</span>`;
+
+  const feelsDiff = w ? Math.abs(w.tempF - w.feelsLikeF) : 0;
+  const weatherDetail = w
+    ? `${feelsDiff >= 3 ? `Feels like ${w.feelsLikeF}° · ` : ''}Wind ${w.windMph} mph${w.gustsMph > w.windMph + 5 ? ` (gusts ${w.gustsMph})` : ''}${w.precipIn > 0 ? ` · ${w.precipIn}" rain` : ''}${w.uvIndex >= 6 ? ` · UV ${Math.round(w.uvIndex)} (high)` : ''}`
+    : '';
 
   li.innerHTML = `
     <div class="beach-row">
@@ -39,6 +79,8 @@ function renderBeach(beach, rank) {
       <div class="score ${cls}">${beach.shoreScore}</div>
     </div>
     <div class="beach-details">
+      <div class="weather-summary">${weatherSummary}</div>
+      ${weatherDetail ? `<div class="weather-detail">${weatherDetail}</div>` : ''}
       <div class="factors">
         <div class="factor"><div class="factor-label">Water</div><div class="factor-value">${beach.factors.water}</div></div>
         <div class="factor"><div class="factor-label">Surf</div><div class="factor-value">${beach.factors.surf}</div></div>
@@ -83,3 +125,5 @@ async function load() {
 }
 
 load();
+
+// Re-fetch every 5 minutes so users with the page open see fresh data
