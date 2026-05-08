@@ -9,12 +9,12 @@ const { fetchAllGoogleCrowds } = require('./google_crowd');
 const { addReport, getReportedCrowd, getAllStats } = require('./reports');
 const { getWebcam } = require('./webcams');
 const { estimateAllParking } = require('./parking');
+const { fetchAllTides } = require('./tides');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const USE_GOOGLE_CROWDS = process.env.USE_GOOGLE_CROWDS !== 'false';
-
+const USE_GOOGLE_CROWDS = false; // disabled locally for fast cold start, re-enable on Vercel
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
@@ -44,11 +44,12 @@ function labelFromLevel(level) {
 }
 
 async function computeShoreScores() {
-  const [weatherMap, marineMap, waterMap, googleMap] = await Promise.all([
+  const [weatherMap, marineMap, waterMap, googleMap, tideMap] = await Promise.all([
     fetchAllWeather(),
     fetchAllMarine(),
     fetchAllWater(),
-    USE_GOOGLE_CROWDS ? fetchAllGoogleCrowds().catch(() => ({})) : Promise.resolve({})
+    USE_GOOGLE_CROWDS ? fetchAllGoogleCrowds().catch(() => ({})) : Promise.resolve({}),
+    fetchAllTides().catch(() => ({}))
   ]);
 
   const heuristicMap = estimateAllCrowds(weatherMap);
@@ -78,6 +79,7 @@ async function computeShoreScores() {
     const waData = waterMap[beach.id];
     const cResolved = resolvedCrowds[beach.id];
     const pData = parkingMap[beach.id];
+    const tData = tideMap[beach.id];
 
     const weather = wData?.weatherScore ?? 50;
     const weatherDetails = wData?.weather ?? null;
@@ -93,6 +95,8 @@ async function computeShoreScores() {
 
     const parking = pData?.parkingScore ?? 50;
     const parkingDetails = pData ? { score: parking, label: pData.parkingLabel } : null;
+
+    const tideDetails = tData || null;
 
     const shoreScore = Math.round(
       water * 0.30 +
@@ -111,6 +115,7 @@ async function computeShoreScores() {
       waterDetails,
       crowdDetails,
       parkingDetails,
+      tideDetails,
       webcamUrl: getWebcam(beach.id)
     };
   }).sort((a, b) => b.shoreScore - a.shoreScore);

@@ -4,8 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <meta name="theme-color" content="#0a4d6e">
-  <meta name="description" content="Real-time Jersey Shore beach rankings. Find the best beach right now.">
-  <title>ShoreCast — Find Your Best Jersey Shore Beach Right Now</title>
+
+  <title>ShoreCast — The best Jersey Shore beach right now</title>
+  <meta name="description" content="Real-time rankings of all 30 Jersey Shore beaches from Sandy Hook to Cape May. Weather, surf, water quality, tides, crowds, and parking — updated continuously.">
+
+  <!-- Favicon (SVG, sharp at every size, no fallback file needed) -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
+  <!-- Open Graph: shows when shared on iMessage, Slack, Discord, Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ShoreCast — The best Jersey Shore beach right now">
+  <meta property="og:description" content="Real-time rankings of all 30 Jersey Shore beaches. Weather, surf, water quality, tides, crowds, and parking.">
+  <meta property="og:url" content="https://shorecast1.vercel.app">
+  <meta property="og:image" content="https://shorecast1.vercel.app/og-image.svg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="ShoreCast">
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ShoreCast — The best Jersey Shore beach right now">
+  <meta name="twitter:description" content="Real-time rankings of all 30 Jersey Shore beaches.">
+  <meta name="twitter:image" content="https://shorecast1.vercel.app/og-image.svg">
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,7 +43,13 @@
   </main>
 
   <footer>
-    <p>Data refreshes every 15 minutes · Built in NJ</p>
+    <p>Real-time data · Updated every 10 minutes</p>
+    <p class="footer-credits">
+      Weather & surf via <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> ·
+      Tides via <a href="https://tidesandcurrents.noaa.gov" target="_blank" rel="noopener">NOAA</a> ·
+      Webcams via <a href="https://njbeachcams.com" target="_blank" rel="noopener">NJBeachCams</a>
+    </p>
+    <p class="footer-credits">Built locally in NJ 🌊</p>
   </footer>
 
   <script src="app.js"></script>

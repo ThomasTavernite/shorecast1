@@ -1,6 +1,4 @@
 // ShoreCast frontend
-// Fetches /api/beaches, renders ranked list, handles expand-on-tap, lets users report crowds
-
 const list = document.getElementById('beachList');
 const loading = document.getElementById('loading');
 const errorBox = document.getElementById('error');
@@ -52,7 +50,6 @@ function weatherLabel(code) {
 function surfLabel(m) {
   if (!m || m.waveHeightFt == null) return { icon: '🌊', label: 'Surf data unavailable', detail: '' };
   const h = m.waveHeightFt;
-
   let label, icon;
   if (h < 1) { icon = '🟦'; label = 'Flat'; }
   else if (h < 2) { icon = '🌊'; label = 'Small'; }
@@ -60,7 +57,6 @@ function surfLabel(m) {
   else if (h < 6) { icon = '🏄'; label = 'Surfable'; }
   else if (h < 8) { icon = '⚠️'; label = 'Rough'; }
   else { icon = '🚫'; label = 'Hazardous'; }
-
   const periodTxt = m.wavePeriodSec ? ` · ${m.wavePeriodSec}s period` : '';
   const dirTxt = m.waveDirection ? ` · ${m.waveDirection} swell` : '';
   return { icon, label, detail: `${h} ft waves${periodTxt}${dirTxt}` };
@@ -71,6 +67,20 @@ function waterIcon(score) {
   if (score >= 65) return '🌊';
   if (score >= 45) return '⚠️';
   return '🚫';
+}
+
+function tideSnippet(td) {
+  if (!td || !td.next) return '';
+  const next = td.next;
+  const t = new Date(next.when);
+  const timeStr = t.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  const arrow = next.type === 'high' ? '↑' : '↓';
+  const diff = Math.round((t.getTime() - Date.now()) / 60000);
+  const inHrs = diff >= 60
+    ? `in ${Math.floor(diff / 60)}h ${diff % 60}m`
+    : (diff > 0 ? `in ${diff}m` : 'now');
+  const labelText = next.type === 'high' ? 'High tide' : 'Low tide';
+  return `<span class="td-icon">🌊</span><span class="td-label">${arrow} ${labelText} ${timeStr}</span><span class="td-detail">${next.heightFt} ft · ${inHrs}</span>`;
 }
 
 async function submitReport(beachId, level, btnEl) {
@@ -85,7 +95,6 @@ async function submitReport(beachId, level, btnEl) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
     btnEl.parentElement.innerHTML = `<div class="report-thanks">Thanks! Your report is in. (${data.totalReports} total)</div>`;
-    // Refresh data after a brief delay
     setTimeout(load, 1500);
   } catch (err) {
     btnEl.disabled = false;
@@ -104,6 +113,7 @@ function renderBeach(beach, rank) {
   const m = beach.marineDetails;
   const wd = beach.waterDetails;
   const cd = beach.crowdDetails;
+  const td = beach.tideDetails;
   const wl = w ? weatherLabel(w.weatherCode) : null;
   const sl = surfLabel(m);
 
@@ -120,6 +130,8 @@ function renderBeach(beach, rank) {
   const waterSummary = wd
     ? `<span class="wt-icon">${waterIcon(waterScore)}</span><span class="wt-label">${wd.label.label}</span>${wd.label.detail ? `<span class="wt-detail">${wd.label.detail}</span>` : ''}`
     : '';
+
+  const tideSummary = tideSnippet(td);
 
   const crowdSummary = cd && cd.label
     ? `<span class="cr-icon">${cd.label.icon}</span><span class="cr-label">${cd.label.label}</span><span class="cr-detail">${cd.label.detail}</span><span class="cr-source">${cd.source}</span>`
@@ -143,7 +155,8 @@ function renderBeach(beach, rank) {
         ${sl.detail ? `<span class="s-detail">${sl.detail}</span>` : ''}
       </div>
       ${waterSummary ? `<div class="water-summary">${waterSummary}</div>` : ''}
-     ${crowdSummary ? `<div class="crowd-summary">${crowdSummary}</div>` : ''}
+      ${tideSummary ? `<div class="tide-summary">${tideSummary}</div>` : ''}
+      ${crowdSummary ? `<div class="crowd-summary">${crowdSummary}</div>` : ''}
       ${beach.parkingDetails ? `
         <div class="parking-summary">
           <span class="pk-icon">${beach.parkingDetails.label.icon}</span>
@@ -168,22 +181,20 @@ function renderBeach(beach, rank) {
         <div class="factor"><div class="factor-label">Crowd</div><div class="factor-value">${beach.factors.crowd}</div></div>
         <div class="factor"><div class="factor-label">Parking</div><div class="factor-value">${beach.factors.parking}</div></div>
       </div>
-     <div class="meta">
+      <div class="meta">
         <div>Badge: ${beach.badgePrice === 0 ? 'Free' : '$' + beach.badgePrice}</div>
         <div>Parking: ${beach.parkingNotes}</div>
         <span class="vibe-tag">${beach.vibe}</span>
         ${beach.webcamUrl ? `<a class="webcam-link" href="${beach.webcamUrl}" target="_blank" rel="noopener">📹 Watch live webcam →</a>` : ''}
       </div>
-    
+    </div>
   `;
 
-  // Card expand/collapse
   li.addEventListener('click', (e) => {
     if (e.target.closest('.report-btn') || e.target.closest('.report-block')) return;
     li.classList.toggle('expanded');
   });
 
-  // Wire up each report button
   li.querySelectorAll('.report-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -200,10 +211,8 @@ async function load() {
     const res = await fetch('/api/beaches');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-
     loading.hidden = true;
     lastUpdatedEl.textContent = `Updated ${timeAgo(data.lastUpdated)}`;
-
     list.innerHTML = '';
     data.beaches.forEach((beach, i) => {
       list.appendChild(renderBeach(beach, i + 1));
@@ -217,5 +226,4 @@ async function load() {
 }
 
 load();
-
 setInterval(load, 5 * 60 * 1000);

@@ -34,10 +34,12 @@ async function fetchOnce(beach, model) {
 
 async function fetchWeatherForBeach(beach) {
   try {
-    // Try HRRR first (1km resolution, NOAA US)
     const hrrr = await fetchOnce(beach, 'gfs_hrrr');
     if (hrrr) return hrrr;
-    // Fallback: best_match (Open-Meteo auto-picks model)
+  } catch (err) {
+    // HRRR failed entirely, fall through
+  }
+  try {
     return await fetchOnce(beach, null);
   } catch (err) {
     console.error(`Weather fetch failed for ${beach.id}:`, err.message);

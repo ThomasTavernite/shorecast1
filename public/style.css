@@ -188,6 +188,22 @@ main {
 .wt-label { font-weight: 600; color: var(--deep); }
 .wt-detail { color: var(--muted); font-size: 0.8rem; }
 
+.tide-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: linear-gradient(180deg, #d8eaf3 0%, #b9d6e6 100%);
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.td-icon { font-size: 1.2rem; }
+.td-label { font-weight: 600; color: var(--deep); }
+.td-detail { color: var(--muted); font-size: 0.8rem; }
+
 .crowd-summary {
   display: flex;
   align-items: center;
@@ -349,4 +365,18 @@ footer {
 @media (min-width: 640px) {
   header h1 { font-size: 2.4rem; }
   .beach-card { padding: 16px 20px; }
+}
+
+.footer-credits {
+  font-size: 0.7rem;
+  margin-top: 4px;
+}
+
+.footer-credits a {
+  color: var(--ocean);
+  text-decoration: none;
+}
+
+.footer-credits a:hover {
+  text-decoration: underline;
 }
