@@ -6,14 +6,20 @@ const { fetchAllWeather } = require('./weather');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve frontend from /public
 app.use(express.static(path.join(__dirname, 'public')));
 
-// In-memory cache for computed beach data
+// In-memory cache (persists across "warm" requests on the same instance)
 let beachCache = [];
 let lastUpdated = null;
+let inFlight = null; // dedupe concurrent refreshes
 
-// Compute ShoreScore for each beach using real weather + mock for other factors
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+function isStale() {
+  if (!lastUpdated) return true;
+  return Date.now() - new Date(lastUpdated).getTime() > CACHE_TTL_MS;
+}
+
 async function computeShoreScores() {
   const weatherMap = await fetchAllWeather();
 
@@ -45,25 +51,31 @@ async function computeShoreScores() {
   }).sort((a, b) => b.shoreScore - a.shoreScore);
 }
 
-// Refresh cache
 async function refreshCache() {
-  try {
-    beachCache = await computeShoreScores();
-    lastUpdated = new Date().toISOString();
-    console.log(`[${lastUpdated}] Cache refreshed, ${beachCache.length} beaches`);
-  } catch (err) {
-    console.error('Cache refresh failed:', err.message);
+  if (inFlight) return inFlight; // reuse pending refresh
+  inFlight = (async () => {
+    try {
+      beachCache = await computeShoreScores();
+      lastUpdated = new Date().toISOString();
+      console.log(`[${lastUpdated}] Cache refreshed, ${beachCache.length} beaches`);
+    } catch (err) {
+      console.error('Cache refresh failed:', err.message);
+    } finally {
+      inFlight = null;
+    }
+  })();
+  return inFlight;
+}
+
+// Ensure cache is fresh before serving — works on both local and Vercel
+async function ensureCache() {
+  if (beachCache.length === 0 || isStale()) {
+    await refreshCache();
   }
 }
 
-// Initial load
-refreshCache();
-
-// Refresh every 15 minutes
-setInterval(refreshCache, 15 * 60 * 1000);
-
-// API: all beaches ranked
-app.get('/api/beaches', (req, res) => {
+app.get('/api/beaches', async (req, res) => {
+  await ensureCache();
   res.json({
     lastUpdated,
     count: beachCache.length,
@@ -71,20 +83,22 @@ app.get('/api/beaches', (req, res) => {
   });
 });
 
-// API: single beach by id
-app.get('/api/beaches/:id', (req, res) => {
+app.get('/api/beaches/:id', async (req, res) => {
+  await ensureCache();
   const beach = beachCache.find(b => b.id === req.params.id);
   if (!beach) return res.status(404).json({ error: 'Beach not found' });
   res.json(beach);
 });
 
-// Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', lastUpdated });
+  res.json({ status: 'ok', lastUpdated, cached: beachCache.length });
 });
 
-app.listen(PORT, () => {
-  console.log(`ShoreCast running on http://localhost:${PORT}`);
-});
+// Local dev only — Vercel ignores this
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`ShoreCast running on http://localhost:${PORT}`);
+  });
+}
 
 module.exports = app;
