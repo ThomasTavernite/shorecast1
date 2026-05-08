@@ -1,29 +1,43 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
   <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0a4d6e"/>
-      <stop offset="100%" stop-color="#1c7a9e"/>
+    <linearGradient id="ogSky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFB347"/>
+      <stop offset="35%" stop-color="#FF8C5A"/>
+      <stop offset="75%" stop-color="#5BA8D4"/>
+      <stop offset="100%" stop-color="#0077B6"/>
     </linearGradient>
-    <linearGradient id="sand" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#f7f3ec"/>
-      <stop offset="100%" stop-color="#e8dcc4"/>
+    <radialGradient id="ogSun" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF4D6"/>
+      <stop offset="60%" stop-color="#FFD56B"/>
+      <stop offset="100%" stop-color="#FFB347"/>
+    </radialGradient>
+    <linearGradient id="ogWave" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#48CAE4"/>
+      <stop offset="100%" stop-color="#0096C7"/>
+    </linearGradient>
+    <linearGradient id="ogSand" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F5DEB3"/>
+      <stop offset="100%" stop-color="#E6C580"/>
     </linearGradient>
   </defs>
 
-  <rect width="1200" height="630" fill="url(#sky)"/>
-  <circle cx="980" cy="160" r="70" fill="#f5d77a"/>
+  <rect width="1200" height="630" fill="url(#ogSky)"/>
 
-  <path d="M0 440 Q100 410 200 440 T400 440 T600 440 T800 440 T1000 440 T1200 440 L1200 470 L0 470 Z" fill="#2b97c0" opacity="0.6"/>
-  <path d="M0 470 Q100 440 200 470 T400 470 T600 470 T800 470 T1000 470 T1200 470 L1200 500 L0 500 Z" fill="#1c7a9e" opacity="0.7"/>
+  <circle cx="1000" cy="180" r="95" fill="url(#ogSun)"/>
 
-  <rect x="0" y="495" width="1200" height="135" fill="url(#sand)"/>
+  <ellipse cx="1000" cy="430" rx="120" ry="8" fill="#FFE4A8" opacity="0.5"/>
+  <ellipse cx="1000" cy="455" rx="90" ry="6" fill="#FFE4A8" opacity="0.4"/>
+  <ellipse cx="1000" cy="478" rx="60" ry="5" fill="#FFE4A8" opacity="0.3"/>
 
-  <text x="80" y="220" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="140" font-weight="800" fill="#ffffff" letter-spacing="-3">Shorely</text>
-  <text x="82" y="290" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="42" font-weight="500" fill="#ffffff" opacity="0.92">Know before you go.</text>
-  <text x="82" y="345" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="26" font-weight="400" fill="#ffffff" opacity="0.75">Weather · Surf · Water · Tides · Crowd · Parking</text>
+  <path d="M 0 420 Q 300 400 600 420 T 1200 420 L 1200 630 L 0 630 Z" fill="url(#ogWave)" opacity="0.85"/>
 
-  <rect x="80" y="540" width="290" height="62" rx="31" fill="#ffffff"/>
-  <text x="225" y="582" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="26" font-weight="700" fill="#0a4d6e">30 BEACHES, RANKED</text>
+  <path d="M -50 510 C 200 450, 400 460, 550 500 C 650 540, 700 460, 850 480 C 1000 500, 1100 490, 1250 500 L 1250 630 L -50 630 Z" fill="url(#ogWave)"/>
 
-  <text x="1120" y="600" text-anchor="end" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="500" fill="#0a4d6e" opacity="0.7">@shorely.io</text>
+  <path d="M 0 605 Q 600 595 1200 605 L 1200 630 L 0 630 Z" fill="url(#ogSand)"/>
+
+  <text x="600" y="290" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="160" font-weight="800" fill="#FFFFFF" letter-spacing="-6">Shorely</text>
+
+  <text x="600" y="350" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="40" font-weight="500" fill="#FFFFFF" opacity="0.95" letter-spacing="1">Know before you go.</text>
+
+  <text x="600" y="395" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="22" font-weight="500" fill="#FFFFFF" opacity="0.8">Real-time Jersey Shore beach rankings</text>
 </svg>
