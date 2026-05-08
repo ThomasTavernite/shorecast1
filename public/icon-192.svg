@@ -1,6 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
-  <rect width="192" height="192" rx="42" fill="#0a4d6e"/>
-  <path d="M18 114 Q42 96 66 114 T114 114 T162 114 L174 114 L174 150 L18 150 Z" fill="#1c7a9e"/>
-  <path d="M18 132 Q42 114 66 132 T114 132 T162 132 L174 132 L174 168 L18 168 Z" fill="#2b97c0"/>
-  <circle cx="144" cy="60" r="24" fill="#f5d77a"/>
+  <defs>
+    <linearGradient id="iconSky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF8C5A"/>
+      <stop offset="60%" stop-color="#48CAE4"/>
+      <stop offset="100%" stop-color="#0077B6"/>
+    </linearGradient>
+    <radialGradient id="iconSun" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF4D6"/>
+      <stop offset="100%" stop-color="#FFB347"/>
+    </radialGradient>
+  </defs>
+  <rect width="192" height="192" rx="36" fill="url(#iconSky)"/>
+  <circle cx="96" cy="78" r="33" fill="url(#iconSun)"/>
+  <path d="M 12 138 C 42 120, 66 126, 96 138 C 126 150, 150 126, 180 138 L 180 180 L 12 180 Z" fill="#0096C7"/>
 </svg>
