@@ -49,7 +49,6 @@ function weatherLabel(code) {
   return map[code] || { icon: '🌤️', label: 'Mild' };
 }
 
-// Plain-English label for surf condition
 function surfLabel(m) {
   if (!m || m.waveHeightFt == null) return { icon: '🌊', label: 'Surf data unavailable', detail: '' };
   const h = m.waveHeightFt;
@@ -64,11 +63,14 @@ function surfLabel(m) {
 
   const periodTxt = m.wavePeriodSec ? ` · ${m.wavePeriodSec}s period` : '';
   const dirTxt = m.waveDirection ? ` · ${m.waveDirection} swell` : '';
-  return {
-    icon,
-    label,
-    detail: `${h} ft waves${periodTxt}${dirTxt}`
-  };
+  return { icon, label, detail: `${h} ft waves${periodTxt}${dirTxt}` };
+}
+
+function waterIcon(score) {
+  if (score >= 85) return '💧';
+  if (score >= 65) return '🌊';
+  if (score >= 45) return '⚠️';
+  return '🚫';
 }
 
 function renderBeach(beach, rank) {
@@ -79,6 +81,7 @@ function renderBeach(beach, rank) {
   const cls = scoreClass(beach.shoreScore);
   const w = beach.weatherDetails;
   const m = beach.marineDetails;
+  const wd = beach.waterDetails;
   const wl = w ? weatherLabel(w.weatherCode) : null;
   const sl = surfLabel(m);
 
@@ -89,6 +92,11 @@ function renderBeach(beach, rank) {
   const feelsDiff = w ? Math.abs(w.tempF - w.feelsLikeF) : 0;
   const weatherDetail = w
     ? `${feelsDiff >= 3 ? `Feels like ${w.feelsLikeF}° · ` : ''}Wind ${w.windMph} mph${w.gustsMph > w.windMph + 5 ? ` (gusts ${w.gustsMph})` : ''}${w.precipIn > 0 ? ` · ${w.precipIn}" rain` : ''}${w.uvIndex >= 6 ? ` · UV ${Math.round(w.uvIndex)} (high)` : ''}`
+    : '';
+
+  const waterScore = beach.factors.water;
+  const waterSummary = wd
+    ? `<span class="wt-icon">${waterIcon(waterScore)}</span><span class="wt-label">${wd.label.label}</span>${wd.label.detail ? `<span class="wt-detail">${wd.label.detail}</span>` : ''}`
     : '';
 
   li.innerHTML = `
@@ -108,6 +116,7 @@ function renderBeach(beach, rank) {
         <span class="s-label">${sl.label}</span>
         ${sl.detail ? `<span class="s-detail">${sl.detail}</span>` : ''}
       </div>
+      ${waterSummary ? `<div class="water-summary">${waterSummary}</div>` : ''}
       <div class="factors">
         <div class="factor"><div class="factor-label">Water</div><div class="factor-value">${beach.factors.water}</div></div>
         <div class="factor"><div class="factor-label">Surf</div><div class="factor-value">${beach.factors.surf}</div></div>

@@ -229,4 +229,20 @@ footer {
 
 .s-icon { font-size: 1.2rem; }
 .s-label { font-weight: 600; color: var(--good); }
-.s-detail { color: var(--muted); font-size: 0.8rem; }
+
+
+.water-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: linear-gradient(180deg, #e6f4f8 0%, #cfe5ee 100%);
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.wt-icon { font-size: 1.2rem; }
+.wt-label { font-weight: 600; color: var(--deep); }
+.wt-detail { color: var(--muted); font-size: 0.8rem; }
