@@ -5,15 +5,18 @@ const { fetchAllWeather } = require('./weather');
 const { fetchAllMarine } = require('./marine');
 const { fetchAllWater } = require('./water');
 const { estimateAllCrowds } = require('./crowd');
+const { fetchAllGoogleCrowds } = require('./google_crowd');
 const { addReport, getReportedCrowd, getAllStats } = require('./reports');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Feature flag — set to false to disable Google scraping if it breaks
+const USE_GOOGLE_CROWDS = process.env.USE_GOOGLE_CROWDS !== 'false';
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-// Helper: get client IP behind Vercel's proxy
 function getIp(req) {
   return req.headers['x-forwarded-for']?.split(',')[0]?.trim()
     || req.socket.remoteAddress
@@ -31,20 +34,32 @@ function isStale() {
   return Date.now() - new Date(lastUpdated).getTime() > CACHE_TTL_MS;
 }
 
+function labelFromLevel(level) {
+  if (level < 20) return { icon: '🟢', label: 'Empty', detail: 'Beach to yourself' };
+  if (level < 40) return { icon: '🟢', label: 'Light', detail: 'Easy to find space' };
+  if (level < 60) return { icon: '🟡', label: 'Moderate', detail: 'Normal crowd' };
+  if (level < 80) return { icon: '🟠', label: 'Busy', detail: 'Bring a small blanket' };
+  return { icon: '🔴', label: 'Packed', detail: 'Arrive early or skip' };
+}
+
 async function computeShoreScores() {
-  const [weatherMap, marineMap, waterMap] = await Promise.all([
+  // Run weather + marine + water + Google in parallel.
+  // Google takes longer (sequential 30 fetches), but won't slow weather.
+  const [weatherMap, marineMap, waterMap, googleMap] = await Promise.all([
     fetchAllWeather(),
     fetchAllMarine(),
-    fetchAllWater()
+    fetchAllWater(),
+    USE_GOOGLE_CROWDS ? fetchAllGoogleCrowds().catch(() => ({})) : Promise.resolve({})
   ]);
 
-  const crowdMap = estimateAllCrowds(weatherMap);
+  const heuristicMap = estimateAllCrowds(weatherMap);
 
   return BEACHES.map(beach => {
     const wData = weatherMap[beach.id];
     const mData = marineMap[beach.id];
     const waData = waterMap[beach.id];
-    const cData = crowdMap[beach.id];
+    const heuristic = heuristicMap[beach.id];
+    const googleCrowd = googleMap[beach.id]; // {level, source} or undefined
 
     const weather = wData?.weatherScore ?? 50;
     const weatherDetails = wData?.weather ?? null;
@@ -55,22 +70,27 @@ async function computeShoreScores() {
     const water = waData?.waterScore ?? 70;
     const waterDetails = waData ? { rainfall: waData.rainfall, label: waData.waterLabel } : null;
 
-    // Blend: user reports override estimate when we have ≥3 fresh reports
-    let crowd = cData?.crowdScore ?? 50;
-    let crowdLevel = cData?.crowdLevel ?? 50;
-    let crowdLabel = cData?.crowdLabel ?? null;
+    // ===== Crowd resolution: reports > google > heuristic =====
+    let crowdLevel = heuristic?.crowdLevel ?? 50;
     let crowdSource = 'estimate';
 
-    const reported = getReportedCrowd(beach.id);
-    if (reported) {
-      // Blend 70% reports + 30% heuristic for stability against bad-faith spam
-      crowdLevel = Math.round(reported.avgLevel * 0.7 + crowdLevel * 0.3);
-      crowd = 100 - crowdLevel;
-      crowdSource = `reports (${reported.reportCount})`;
-      crowdLabel = labelFromLevel(crowdLevel);
+    // Google overrides heuristic (if available)
+    if (googleCrowd) {
+      // Blend 60% Google + 40% heuristic for stability
+      crowdLevel = Math.round(googleCrowd.level * 0.6 + crowdLevel * 0.4);
+      crowdSource = 'google live';
     }
 
-    const crowdDetails = { level: crowdLevel, label: crowdLabel, source: crowdSource };
+    // User reports override everything (when ≥3 fresh)
+    const reported = getReportedCrowd(beach.id);
+    if (reported) {
+      // Blend 70% reports + 30% prior estimate
+      crowdLevel = Math.round(reported.avgLevel * 0.7 + crowdLevel * 0.3);
+      crowdSource = `${reported.reportCount} reports`;
+    }
+
+    const crowd = 100 - crowdLevel;
+    const crowdDetails = { level: crowdLevel, label: labelFromLevel(crowdLevel), source: crowdSource };
 
     // Parking still placeholder
     const parking = 30 + Math.floor(Math.random() * 70);
@@ -93,14 +113,6 @@ async function computeShoreScores() {
       crowdDetails
     };
   }).sort((a, b) => b.shoreScore - a.shoreScore);
-}
-
-function labelFromLevel(level) {
-  if (level < 20) return { icon: '🟢', label: 'Empty', detail: 'Beach to yourself' };
-  if (level < 40) return { icon: '🟢', label: 'Light', detail: 'Easy to find space' };
-  if (level < 60) return { icon: '🟡', label: 'Moderate', detail: 'Normal crowd' };
-  if (level < 80) return { icon: '🟠', label: 'Busy', detail: 'Bring a small blanket' };
-  return { icon: '🔴', label: 'Packed', detail: 'Arrive early or skip' };
 }
 
 async function refreshCache() {
@@ -141,8 +153,6 @@ app.get('/api/beaches/:id', async (req, res) => {
   res.json(beach);
 });
 
-// Submit a user crowd report
-// POST /api/beaches/:id/report  body: { level: 0-100 }
 app.post('/api/beaches/:id/report', (req, res) => {
   const beachId = req.params.id;
   const { level } = req.body || {};
@@ -154,8 +164,7 @@ app.post('/api/beaches/:id/report', (req, res) => {
   try {
     const ip = getIp(req);
     const count = addReport(beachId, level, ip);
-    // Force cache to recompute next request so new report shows up
-    lastUpdated = null;
+    lastUpdated = null; // force refresh next request
     res.json({ ok: true, beachId, totalReports: count });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -163,7 +172,7 @@ app.post('/api/beaches/:id/report', (req, res) => {
 });
 
 app.get('/api/stats', (req, res) => {
-  res.json({ reports: getAllStats(), cacheAge: lastUpdated });
+  res.json({ reports: getAllStats(), cacheAge: lastUpdated, googleEnabled: USE_GOOGLE_CROWDS });
 });
 
 app.get('/api/health', (req, res) => {
