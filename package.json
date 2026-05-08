@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/ThomasTavernite/shorecast1#readme",
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "cheerio": "^1.2.0",
     "express": "^5.2.1"
   }
