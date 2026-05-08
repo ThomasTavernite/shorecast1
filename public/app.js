@@ -161,12 +161,13 @@ function renderBeach(beach, rank) {
         <div class="factor"><div class="factor-label">Crowd</div><div class="factor-value">${beach.factors.crowd}</div></div>
         <div class="factor"><div class="factor-label">Parking</div><div class="factor-value">${beach.factors.parking}</div></div>
       </div>
-      <div class="meta">
+     <div class="meta">
         <div>Badge: ${beach.badgePrice === 0 ? 'Free' : '$' + beach.badgePrice}</div>
         <div>Parking: ${beach.parkingNotes}</div>
         <span class="vibe-tag">${beach.vibe}</span>
+        ${beach.webcamUrl ? `<a class="webcam-link" href="${beach.webcamUrl}" target="_blank" rel="noopener">📹 Watch live webcam →</a>` : ''}
       </div>
-    </div>
+    
   `;
 
   // Card expand/collapse

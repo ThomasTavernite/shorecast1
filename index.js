@@ -7,11 +7,11 @@ const { fetchAllWater } = require('./water');
 const { estimateAllCrowds } = require('./crowd');
 const { fetchAllGoogleCrowds } = require('./google_crowd');
 const { addReport, getReportedCrowd, getAllStats } = require('./reports');
+const { getWebcam } = require('./webcams');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Feature flag — set to false to disable Google scraping if it breaks
 const USE_GOOGLE_CROWDS = process.env.USE_GOOGLE_CROWDS !== 'false';
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -43,8 +43,6 @@ function labelFromLevel(level) {
 }
 
 async function computeShoreScores() {
-  // Run weather + marine + water + Google in parallel.
-  // Google takes longer (sequential 30 fetches), but won't slow weather.
   const [weatherMap, marineMap, waterMap, googleMap] = await Promise.all([
     fetchAllWeather(),
     fetchAllMarine(),
@@ -59,7 +57,7 @@ async function computeShoreScores() {
     const mData = marineMap[beach.id];
     const waData = waterMap[beach.id];
     const heuristic = heuristicMap[beach.id];
-    const googleCrowd = googleMap[beach.id]; // {level, source} or undefined
+    const googleCrowd = googleMap[beach.id];
 
     const weather = wData?.weatherScore ?? 50;
     const weatherDetails = wData?.weather ?? null;
@@ -70,21 +68,16 @@ async function computeShoreScores() {
     const water = waData?.waterScore ?? 70;
     const waterDetails = waData ? { rainfall: waData.rainfall, label: waData.waterLabel } : null;
 
-    // ===== Crowd resolution: reports > google > heuristic =====
     let crowdLevel = heuristic?.crowdLevel ?? 50;
     let crowdSource = 'estimate';
 
-    // Google overrides heuristic (if available)
     if (googleCrowd) {
-      // Blend 60% Google + 40% heuristic for stability
       crowdLevel = Math.round(googleCrowd.level * 0.6 + crowdLevel * 0.4);
       crowdSource = 'google live';
     }
 
-    // User reports override everything (when ≥3 fresh)
     const reported = getReportedCrowd(beach.id);
     if (reported) {
-      // Blend 70% reports + 30% prior estimate
       crowdLevel = Math.round(reported.avgLevel * 0.7 + crowdLevel * 0.3);
       crowdSource = `${reported.reportCount} reports`;
     }
@@ -92,7 +85,6 @@ async function computeShoreScores() {
     const crowd = 100 - crowdLevel;
     const crowdDetails = { level: crowdLevel, label: labelFromLevel(crowdLevel), source: crowdSource };
 
-    // Parking still placeholder
     const parking = 30 + Math.floor(Math.random() * 70);
 
     const shoreScore = Math.round(
@@ -110,7 +102,8 @@ async function computeShoreScores() {
       weatherDetails,
       marineDetails,
       waterDetails,
-      crowdDetails
+      crowdDetails,
+      webcamUrl: getWebcam(beach.id)
     };
   }).sort((a, b) => b.shoreScore - a.shoreScore);
 }
@@ -139,11 +132,7 @@ async function ensureCache() {
 
 app.get('/api/beaches', async (req, res) => {
   await ensureCache();
-  res.json({
-    lastUpdated,
-    count: beachCache.length,
-    beaches: beachCache
-  });
+  res.json({ lastUpdated, count: beachCache.length, beaches: beachCache });
 });
 
 app.get('/api/beaches/:id', async (req, res) => {
@@ -164,7 +153,7 @@ app.post('/api/beaches/:id/report', (req, res) => {
   try {
     const ip = getIp(req);
     const count = addReport(beachId, level, ip);
-    lastUpdated = null; // force refresh next request
+    lastUpdated = null;
     res.json({ ok: true, beachId, totalReports: count });
   } catch (err) {
     res.status(400).json({ error: err.message });

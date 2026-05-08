@@ -318,3 +318,21 @@ footer {
   font-weight: 500;
   padding: 4px 0;
 }
+
+.webcam-link {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 8px 14px;
+  background: var(--deep);
+  color: var(--foam);
+  text-decoration: none;
+  border-radius: 100px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  align-self: flex-start;
+  transition: background 0.15s;
+}
+
+.webcam-link:hover {
+  background: var(--ocean);
+}
