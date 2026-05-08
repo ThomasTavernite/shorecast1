@@ -1,4 +1,4 @@
-// ShoreCast frontend
+// Shorely frontend
 const list = document.getElementById('beachList');
 const loading = document.getElementById('loading');
 const errorBox = document.getElementById('error');
@@ -10,6 +10,17 @@ function scoreClass(score) {
   return 'bad';
 }
 
+function rankMedal(rank) {
+  if (rank === 1) return '🥇';
+  if (rank === 2) return '🥈';
+  if (rank === 3) return '🥉';
+  return null;
+}
+
+function vibeClass(vibe) {
+  return `vibe-${(vibe || '').toLowerCase()}`;
+}
+
 function timeAgo(iso) {
   if (!iso) return '';
   const diff = Date.now() - new Date(iso).getTime();
@@ -18,6 +29,12 @@ function timeAgo(iso) {
   if (mins < 60) return `${mins} min ago`;
   const hrs = Math.round(mins / 60);
   return `${hrs} hr ago`;
+}
+
+function timeOfDay(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
 function weatherLabel(code) {
@@ -103,9 +120,12 @@ async function submitReport(beachId, level, btnEl) {
   }
 }
 
+let lastDataUpdated = null;
+
 function renderBeach(beach, rank) {
   const li = document.createElement('li');
   li.className = 'beach-card';
+  if (rank <= 3) li.classList.add('top-rank', `rank-${rank}`);
   li.dataset.id = beach.id;
 
   const cls = scoreClass(beach.shoreScore);
@@ -116,14 +136,15 @@ function renderBeach(beach, rank) {
   const td = beach.tideDetails;
   const wl = w ? weatherLabel(w.weatherCode) : null;
   const sl = surfLabel(m);
+  const medal = rankMedal(rank);
+  const updatedAt = lastDataUpdated ? timeOfDay(lastDataUpdated) : '';
 
   const weatherSummary = w
-    ? `<span class="w-icon">${wl.icon}</span><span class="w-temp">${w.tempF}°</span><span class="w-label">${wl.label}</span>`
+    ? `<span class="w-icon">${wl.icon}</span><span class="w-temp">${w.tempF}°</span><span class="w-feels">Feels ${w.feelsLikeF}°</span><span class="w-label">${wl.label}</span>`
     : `<span class="w-label">Weather unavailable</span>`;
 
-  const feelsDiff = w ? Math.abs(w.tempF - w.feelsLikeF) : 0;
   const weatherDetail = w
-    ? `${feelsDiff >= 3 ? `Feels like ${w.feelsLikeF}° · ` : ''}Wind ${w.windMph} mph${w.gustsMph > w.windMph + 5 ? ` (gusts ${w.gustsMph})` : ''}${w.precipIn > 0 ? ` · ${w.precipIn}" rain` : ''}${w.uvIndex >= 6 ? ` · UV ${Math.round(w.uvIndex)} (high)` : ''}`
+    ? `Wind ${w.windMph} mph${w.gustsMph > w.windMph + 5 ? ` (gusts ${w.gustsMph})` : ''}${w.precipIn > 0 ? ` · ${w.precipIn}" rain` : ''}${w.uvIndex >= 6 ? ` · UV ${Math.round(w.uvIndex)} (high)` : ''}${updatedAt ? ` · as of ${updatedAt}` : ''}`
     : '';
 
   const waterScore = beach.factors.water;
@@ -139,7 +160,7 @@ function renderBeach(beach, rank) {
 
   li.innerHTML = `
     <div class="beach-row">
-      <div class="rank">#${rank}</div>
+      <div class="rank">${medal ? `<span class="medal">${medal}</span>` : `#${rank}`}</div>
       <div class="beach-info">
         <div class="beach-name">${beach.name}</div>
         <div class="beach-town">${beach.town}, ${beach.county} County</div>
@@ -149,6 +170,7 @@ function renderBeach(beach, rank) {
     <div class="beach-details">
       <div class="weather-summary">${weatherSummary}</div>
       ${weatherDetail ? `<div class="weather-detail">${weatherDetail}</div>` : ''}
+      <div class="weather-disclaimer">Weather forecasts vary by source. Numbers shown reflect NOAA model data and may differ slightly from your phone's weather app.</div>
       <div class="surf-summary">
         <span class="s-icon">${sl.icon}</span>
         <span class="s-label">${sl.label}</span>
@@ -185,7 +207,7 @@ function renderBeach(beach, rank) {
         <div>Badge: ${beach.badgePrice === 0 ? 'Free' : '$' + beach.badgePrice}</div>
         <div>Parking: ${beach.parkingNotes}</div>
         <div class="badge-disclaimer">Prices reflect 2026 published rates and may change. Confirm with the town before purchasing.</div>
-        <span class="vibe-tag">${beach.vibe}</span>
+        <span class="vibe-tag ${vibeClass(beach.vibe)}">${beach.vibe}</span>
         ${beach.webcamUrl ? `<a class="webcam-link" href="${beach.webcamUrl}" target="_blank" rel="noopener">📹 Watch live webcam →</a>` : ''}
       </div>
     </div>
@@ -212,6 +234,7 @@ async function load() {
     const res = await fetch('/api/beaches');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
+    lastDataUpdated = data.lastUpdated;
     loading.hidden = true;
     lastUpdatedEl.textContent = `Updated ${timeAgo(data.lastUpdated)}`;
     list.innerHTML = '';
