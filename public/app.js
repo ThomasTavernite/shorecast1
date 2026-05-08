@@ -1,5 +1,5 @@
 // ShoreCast frontend
-// Fetches /api/beaches, renders ranked list, handles expand-on-tap
+// Fetches /api/beaches, renders ranked list, handles expand-on-tap, lets users report crowds
 
 const list = document.getElementById('beachList');
 const loading = document.getElementById('loading');
@@ -73,6 +73,27 @@ function waterIcon(score) {
   return '🚫';
 }
 
+async function submitReport(beachId, level, btnEl) {
+  btnEl.disabled = true;
+  btnEl.textContent = 'Sending…';
+  try {
+    const res = await fetch(`/api/beaches/${beachId}/report`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ level })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    btnEl.parentElement.innerHTML = `<div class="report-thanks">Thanks! Your report is in. (${data.totalReports} total)</div>`;
+    // Refresh data after a brief delay
+    setTimeout(load, 1500);
+  } catch (err) {
+    btnEl.disabled = false;
+    btnEl.textContent = 'Try again';
+    alert(err.message);
+  }
+}
+
 function renderBeach(beach, rank) {
   const li = document.createElement('li');
   li.className = 'beach-card';
@@ -82,6 +103,7 @@ function renderBeach(beach, rank) {
   const w = beach.weatherDetails;
   const m = beach.marineDetails;
   const wd = beach.waterDetails;
+  const cd = beach.crowdDetails;
   const wl = w ? weatherLabel(w.weatherCode) : null;
   const sl = surfLabel(m);
 
@@ -97,6 +119,10 @@ function renderBeach(beach, rank) {
   const waterScore = beach.factors.water;
   const waterSummary = wd
     ? `<span class="wt-icon">${waterIcon(waterScore)}</span><span class="wt-label">${wd.label.label}</span>${wd.label.detail ? `<span class="wt-detail">${wd.label.detail}</span>` : ''}`
+    : '';
+
+  const crowdSummary = cd && cd.label
+    ? `<span class="cr-icon">${cd.label.icon}</span><span class="cr-label">${cd.label.label}</span><span class="cr-detail">${cd.label.detail}</span><span class="cr-source">${cd.source}</span>`
     : '';
 
   li.innerHTML = `
@@ -117,6 +143,17 @@ function renderBeach(beach, rank) {
         ${sl.detail ? `<span class="s-detail">${sl.detail}</span>` : ''}
       </div>
       ${waterSummary ? `<div class="water-summary">${waterSummary}</div>` : ''}
+      ${crowdSummary ? `<div class="crowd-summary">${crowdSummary}</div>` : ''}
+      <div class="report-block">
+        <div class="report-prompt">At the beach? Help others — how crowded is it?</div>
+        <div class="report-buttons">
+          <button class="report-btn" data-level="10">🟢 Empty</button>
+          <button class="report-btn" data-level="35">🟢 Light</button>
+          <button class="report-btn" data-level="55">🟡 Moderate</button>
+          <button class="report-btn" data-level="75">🟠 Busy</button>
+          <button class="report-btn" data-level="92">🔴 Packed</button>
+        </div>
+      </div>
       <div class="factors">
         <div class="factor"><div class="factor-label">Water</div><div class="factor-value">${beach.factors.water}</div></div>
         <div class="factor"><div class="factor-label">Surf</div><div class="factor-value">${beach.factors.surf}</div></div>
@@ -132,8 +169,19 @@ function renderBeach(beach, rank) {
     </div>
   `;
 
-  li.addEventListener('click', () => {
+  // Card expand/collapse
+  li.addEventListener('click', (e) => {
+    if (e.target.closest('.report-btn') || e.target.closest('.report-block')) return;
     li.classList.toggle('expanded');
+  });
+
+  // Wire up each report button
+  li.querySelectorAll('.report-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const level = parseInt(btn.dataset.level, 10);
+      submitReport(beach.id, level, btn);
+    });
   });
 
   return li;

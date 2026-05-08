@@ -4,11 +4,21 @@ const BEACHES = require('./beaches');
 const { fetchAllWeather } = require('./weather');
 const { fetchAllMarine } = require('./marine');
 const { fetchAllWater } = require('./water');
+const { estimateAllCrowds } = require('./crowd');
+const { addReport, getReportedCrowd, getAllStats } = require('./reports');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+
+// Helper: get client IP behind Vercel's proxy
+function getIp(req) {
+  return req.headers['x-forwarded-for']?.split(',')[0]?.trim()
+    || req.socket.remoteAddress
+    || 'unknown';
+}
 
 let beachCache = [];
 let lastUpdated = null;
@@ -22,17 +32,19 @@ function isStale() {
 }
 
 async function computeShoreScores() {
-  // Fetch weather, marine, water in parallel
   const [weatherMap, marineMap, waterMap] = await Promise.all([
     fetchAllWeather(),
     fetchAllMarine(),
     fetchAllWater()
   ]);
 
+  const crowdMap = estimateAllCrowds(weatherMap);
+
   return BEACHES.map(beach => {
     const wData = weatherMap[beach.id];
     const mData = marineMap[beach.id];
     const waData = waterMap[beach.id];
+    const cData = crowdMap[beach.id];
 
     const weather = wData?.weatherScore ?? 50;
     const weatherDetails = wData?.weather ?? null;
@@ -43,8 +55,24 @@ async function computeShoreScores() {
     const water = waData?.waterScore ?? 70;
     const waterDetails = waData ? { rainfall: waData.rainfall, label: waData.waterLabel } : null;
 
-    // Mock for now — crowd + parking still placeholders
-    const crowd = 40 + Math.floor(Math.random() * 60);
+    // Blend: user reports override estimate when we have ≥3 fresh reports
+    let crowd = cData?.crowdScore ?? 50;
+    let crowdLevel = cData?.crowdLevel ?? 50;
+    let crowdLabel = cData?.crowdLabel ?? null;
+    let crowdSource = 'estimate';
+
+    const reported = getReportedCrowd(beach.id);
+    if (reported) {
+      // Blend 70% reports + 30% heuristic for stability against bad-faith spam
+      crowdLevel = Math.round(reported.avgLevel * 0.7 + crowdLevel * 0.3);
+      crowd = 100 - crowdLevel;
+      crowdSource = `reports (${reported.reportCount})`;
+      crowdLabel = labelFromLevel(crowdLevel);
+    }
+
+    const crowdDetails = { level: crowdLevel, label: crowdLabel, source: crowdSource };
+
+    // Parking still placeholder
     const parking = 30 + Math.floor(Math.random() * 70);
 
     const shoreScore = Math.round(
@@ -61,9 +89,18 @@ async function computeShoreScores() {
       factors: { water, surf, weather, crowd, parking },
       weatherDetails,
       marineDetails,
-      waterDetails
+      waterDetails,
+      crowdDetails
     };
   }).sort((a, b) => b.shoreScore - a.shoreScore);
+}
+
+function labelFromLevel(level) {
+  if (level < 20) return { icon: '🟢', label: 'Empty', detail: 'Beach to yourself' };
+  if (level < 40) return { icon: '🟢', label: 'Light', detail: 'Easy to find space' };
+  if (level < 60) return { icon: '🟡', label: 'Moderate', detail: 'Normal crowd' };
+  if (level < 80) return { icon: '🟠', label: 'Busy', detail: 'Bring a small blanket' };
+  return { icon: '🔴', label: 'Packed', detail: 'Arrive early or skip' };
 }
 
 async function refreshCache() {
@@ -102,6 +139,31 @@ app.get('/api/beaches/:id', async (req, res) => {
   const beach = beachCache.find(b => b.id === req.params.id);
   if (!beach) return res.status(404).json({ error: 'Beach not found' });
   res.json(beach);
+});
+
+// Submit a user crowd report
+// POST /api/beaches/:id/report  body: { level: 0-100 }
+app.post('/api/beaches/:id/report', (req, res) => {
+  const beachId = req.params.id;
+  const { level } = req.body || {};
+
+  if (!BEACHES.find(b => b.id === beachId)) {
+    return res.status(404).json({ error: 'Beach not found' });
+  }
+
+  try {
+    const ip = getIp(req);
+    const count = addReport(beachId, level, ip);
+    // Force cache to recompute next request so new report shows up
+    lastUpdated = null;
+    res.json({ ok: true, beachId, totalReports: count });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get('/api/stats', (req, res) => {
+  res.json({ reports: getAllStats(), cacheAge: lastUpdated });
 });
 
 app.get('/api/health', (req, res) => {
