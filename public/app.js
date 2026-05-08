@@ -22,7 +22,6 @@ function timeAgo(iso) {
   return `${hrs} hr ago`;
 }
 
-// WMO weather codes -> friendly label + emoji
 function weatherLabel(code) {
   const map = {
     0: { icon: '☀️', label: 'Clear' },
@@ -50,6 +49,28 @@ function weatherLabel(code) {
   return map[code] || { icon: '🌤️', label: 'Mild' };
 }
 
+// Plain-English label for surf condition
+function surfLabel(m) {
+  if (!m || m.waveHeightFt == null) return { icon: '🌊', label: 'Surf data unavailable', detail: '' };
+  const h = m.waveHeightFt;
+
+  let label, icon;
+  if (h < 1) { icon = '🟦'; label = 'Flat'; }
+  else if (h < 2) { icon = '🌊'; label = 'Small'; }
+  else if (h < 4) { icon = '🌊'; label = 'Playful'; }
+  else if (h < 6) { icon = '🏄'; label = 'Surfable'; }
+  else if (h < 8) { icon = '⚠️'; label = 'Rough'; }
+  else { icon = '🚫'; label = 'Hazardous'; }
+
+  const periodTxt = m.wavePeriodSec ? ` · ${m.wavePeriodSec}s period` : '';
+  const dirTxt = m.waveDirection ? ` · ${m.waveDirection} swell` : '';
+  return {
+    icon,
+    label,
+    detail: `${h} ft waves${periodTxt}${dirTxt}`
+  };
+}
+
 function renderBeach(beach, rank) {
   const li = document.createElement('li');
   li.className = 'beach-card';
@@ -57,9 +78,10 @@ function renderBeach(beach, rank) {
 
   const cls = scoreClass(beach.shoreScore);
   const w = beach.weatherDetails;
+  const m = beach.marineDetails;
   const wl = w ? weatherLabel(w.weatherCode) : null;
+  const sl = surfLabel(m);
 
-  // Lead with air temp (Google-style), show feels-like only if it differs noticeably
   const weatherSummary = w
     ? `<span class="w-icon">${wl.icon}</span><span class="w-temp">${w.tempF}°</span><span class="w-label">${wl.label}</span>`
     : `<span class="w-label">Weather unavailable</span>`;
@@ -81,6 +103,11 @@ function renderBeach(beach, rank) {
     <div class="beach-details">
       <div class="weather-summary">${weatherSummary}</div>
       ${weatherDetail ? `<div class="weather-detail">${weatherDetail}</div>` : ''}
+      <div class="surf-summary">
+        <span class="s-icon">${sl.icon}</span>
+        <span class="s-label">${sl.label}</span>
+        ${sl.detail ? `<span class="s-detail">${sl.detail}</span>` : ''}
+      </div>
       <div class="factors">
         <div class="factor"><div class="factor-label">Water</div><div class="factor-value">${beach.factors.water}</div></div>
         <div class="factor"><div class="factor-label">Surf</div><div class="factor-value">${beach.factors.surf}</div></div>
@@ -126,4 +153,4 @@ async function load() {
 
 load();
 
-// Re-fetch every 5 minutes so users with the page open see fresh data
+setInterval(load, 5 * 60 * 1000);

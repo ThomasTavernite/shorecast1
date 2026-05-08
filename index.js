@@ -2,18 +2,18 @@ const express = require('express');
 const path = require('path');
 const BEACHES = require('./beaches');
 const { fetchAllWeather } = require('./weather');
+const { fetchAllMarine } = require('./marine');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// In-memory cache (persists across "warm" requests on the same instance)
 let beachCache = [];
 let lastUpdated = null;
-let inFlight = null; // dedupe concurrent refreshes
+let inFlight = null;
 
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const CACHE_TTL_MS = 10 * 60 * 1000;
 
 function isStale() {
   if (!lastUpdated) return true;
@@ -21,16 +21,24 @@ function isStale() {
 }
 
 async function computeShoreScores() {
-  const weatherMap = await fetchAllWeather();
+  // Fetch weather and marine in parallel — both hit Open-Meteo
+  const [weatherMap, marineMap] = await Promise.all([
+    fetchAllWeather(),
+    fetchAllMarine()
+  ]);
 
   return BEACHES.map(beach => {
     const wData = weatherMap[beach.id];
+    const mData = marineMap[beach.id];
+
     const weather = wData?.weatherScore ?? 50;
     const weatherDetails = wData?.weather ?? null;
 
+    const surf = mData?.surfScore ?? 50;
+    const marineDetails = mData?.marine ?? null;
+
     // Mock for now, real scrapers come next
     const water = 70 + Math.floor(Math.random() * 30);
-    const surf = 50 + Math.floor(Math.random() * 50);
     const crowd = 40 + Math.floor(Math.random() * 60);
     const parking = 30 + Math.floor(Math.random() * 70);
 
@@ -46,13 +54,14 @@ async function computeShoreScores() {
       ...beach,
       shoreScore,
       factors: { water, surf, weather, crowd, parking },
-      weatherDetails
+      weatherDetails,
+      marineDetails
     };
   }).sort((a, b) => b.shoreScore - a.shoreScore);
 }
 
 async function refreshCache() {
-  if (inFlight) return inFlight; // reuse pending refresh
+  if (inFlight) return inFlight;
   inFlight = (async () => {
     try {
       beachCache = await computeShoreScores();
@@ -67,7 +76,6 @@ async function refreshCache() {
   return inFlight;
 }
 
-// Ensure cache is fresh before serving — works on both local and Vercel
 async function ensureCache() {
   if (beachCache.length === 0 || isStale()) {
     await refreshCache();
@@ -94,7 +102,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', lastUpdated, cached: beachCache.length });
 });
 
-// Local dev only — Vercel ignores this
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`ShoreCast running on http://localhost:${PORT}`);
