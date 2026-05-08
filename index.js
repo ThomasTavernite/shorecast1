@@ -8,6 +8,7 @@ const { estimateAllCrowds } = require('./crowd');
 const { fetchAllGoogleCrowds } = require('./google_crowd');
 const { addReport, getReportedCrowd, getAllStats } = require('./reports');
 const { getWebcam } = require('./webcams');
+const { estimateAllParking } = require('./parking');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -52,12 +53,31 @@ async function computeShoreScores() {
 
   const heuristicMap = estimateAllCrowds(weatherMap);
 
+  const resolvedCrowds = {};
+  BEACHES.forEach(beach => {
+    let level = heuristicMap[beach.id]?.crowdLevel ?? 50;
+    let source = 'estimate';
+    const googleCrowd = googleMap[beach.id];
+    if (googleCrowd) {
+      level = Math.round(googleCrowd.level * 0.6 + level * 0.4);
+      source = 'google live';
+    }
+    const reported = getReportedCrowd(beach.id);
+    if (reported) {
+      level = Math.round(reported.avgLevel * 0.7 + level * 0.3);
+      source = `${reported.reportCount} reports`;
+    }
+    resolvedCrowds[beach.id] = { level, source };
+  });
+
+  const parkingMap = estimateAllParking(resolvedCrowds);
+
   return BEACHES.map(beach => {
     const wData = weatherMap[beach.id];
     const mData = marineMap[beach.id];
     const waData = waterMap[beach.id];
-    const heuristic = heuristicMap[beach.id];
-    const googleCrowd = googleMap[beach.id];
+    const cResolved = resolvedCrowds[beach.id];
+    const pData = parkingMap[beach.id];
 
     const weather = wData?.weatherScore ?? 50;
     const weatherDetails = wData?.weather ?? null;
@@ -68,24 +88,11 @@ async function computeShoreScores() {
     const water = waData?.waterScore ?? 70;
     const waterDetails = waData ? { rainfall: waData.rainfall, label: waData.waterLabel } : null;
 
-    let crowdLevel = heuristic?.crowdLevel ?? 50;
-    let crowdSource = 'estimate';
+    const crowd = 100 - cResolved.level;
+    const crowdDetails = { level: cResolved.level, label: labelFromLevel(cResolved.level), source: cResolved.source };
 
-    if (googleCrowd) {
-      crowdLevel = Math.round(googleCrowd.level * 0.6 + crowdLevel * 0.4);
-      crowdSource = 'google live';
-    }
-
-    const reported = getReportedCrowd(beach.id);
-    if (reported) {
-      crowdLevel = Math.round(reported.avgLevel * 0.7 + crowdLevel * 0.3);
-      crowdSource = `${reported.reportCount} reports`;
-    }
-
-    const crowd = 100 - crowdLevel;
-    const crowdDetails = { level: crowdLevel, label: labelFromLevel(crowdLevel), source: crowdSource };
-
-    const parking = 30 + Math.floor(Math.random() * 70);
+    const parking = pData?.parkingScore ?? 50;
+    const parkingDetails = pData ? { score: parking, label: pData.parkingLabel } : null;
 
     const shoreScore = Math.round(
       water * 0.30 +
@@ -103,6 +110,7 @@ async function computeShoreScores() {
       marineDetails,
       waterDetails,
       crowdDetails,
+      parkingDetails,
       webcamUrl: getWebcam(beach.id)
     };
   }).sort((a, b) => b.shoreScore - a.shoreScore);

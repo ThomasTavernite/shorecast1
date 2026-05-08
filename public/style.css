@@ -156,65 +156,6 @@ main {
   padding: 0 2px 12px;
 }
 
-.factors {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.factor {
-  background: var(--bg);
-  padding: 8px 10px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-}
-
-.factor-label {
-  color: var(--muted);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.factor-value {
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.meta {
-  font-size: 0.85rem;
-  color: var(--muted);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.vibe-tag {
-  display: inline-block;
-  padding: 2px 10px;
-  background: var(--sand);
-  color: var(--deep);
-  border-radius: 100px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: capitalize;
-  margin-top: 4px;
-  align-self: flex-start;
-}
-
-footer {
-  text-align: center;
-  padding: 20px;
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-@media (min-width: 640px) {
-  header h1 { font-size: 2.4rem; }
-  .beach-card { padding: 16px 20px; }
-}
-
 .surf-summary {
   display: flex;
   align-items: center;
@@ -229,7 +170,7 @@ footer {
 
 .s-icon { font-size: 1.2rem; }
 .s-label { font-weight: 600; color: var(--good); }
-
+.s-detail { color: var(--muted); font-size: 0.8rem; }
 
 .water-summary {
   display: flex;
@@ -271,6 +212,22 @@ footer {
   padding: 2px 6px;
   border-radius: 100px;
 }
+
+.parking-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: linear-gradient(180deg, #f0eee8 0%, #ddd6c5 100%);
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.pk-icon { font-size: 1.2rem; }
+.pk-label { font-weight: 600; color: var(--deep); }
+.pk-detail { color: var(--muted); font-size: 0.8rem; }
 
 .report-block {
   background: #fafafa;
@@ -319,6 +276,53 @@ footer {
   padding: 4px 0;
 }
 
+.factors {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.factor {
+  background: var(--bg);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.factor-label {
+  color: var(--muted);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.factor-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.meta {
+  font-size: 0.85rem;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vibe-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  background: var(--sand);
+  color: var(--deep);
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  margin-top: 4px;
+  align-self: flex-start;
+}
+
 .webcam-link {
   display: inline-block;
   margin-top: 6px;
@@ -333,6 +337,16 @@ footer {
   transition: background 0.15s;
 }
 
-.webcam-link:hover {
-  background: var(--ocean);
+.webcam-link:hover { background: var(--ocean); }
+
+footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+@media (min-width: 640px) {
+  header h1 { font-size: 2.4rem; }
+  .beach-card { padding: 16px 20px; }
 }

@@ -143,7 +143,14 @@ function renderBeach(beach, rank) {
         ${sl.detail ? `<span class="s-detail">${sl.detail}</span>` : ''}
       </div>
       ${waterSummary ? `<div class="water-summary">${waterSummary}</div>` : ''}
-      ${crowdSummary ? `<div class="crowd-summary">${crowdSummary}</div>` : ''}
+     ${crowdSummary ? `<div class="crowd-summary">${crowdSummary}</div>` : ''}
+      ${beach.parkingDetails ? `
+        <div class="parking-summary">
+          <span class="pk-icon">${beach.parkingDetails.label.icon}</span>
+          <span class="pk-label">${beach.parkingDetails.label.label} parking</span>
+          <span class="pk-detail">${beach.parkingDetails.label.detail}</span>
+        </div>
+      ` : ''}
       <div class="report-block">
         <div class="report-prompt">At the beach? Help others — how crowded is it?</div>
         <div class="report-buttons">
