@@ -1,6 +1,7 @@
 {
-  "name": "ShoreCast",
-  "short_name": "ShoreCast",
+  "id": "/",
+  "name": "Shorely",
+  "short_name": "Shorely",
   "description": "Real-time Jersey Shore beach rankings — weather, surf, water quality, tides, crowds, and parking.",
   "start_url": "/",
   "display": "standalone",

@@ -17,6 +17,9 @@ const PORT = process.env.PORT || 3000;
 const USE_GOOGLE_CROWDS = false; // disabled locally for fast cold start, re-enable on Vercel
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+app.get('/about', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'about.html'));
+});
 
 function getIp(req) {
   return req.headers['x-forwarded-for']?.split(',')[0]?.trim()

@@ -5,52 +5,64 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <meta name="theme-color" content="#0a4d6e">
 
-  <title>ShoreCast — The best Jersey Shore beach right now</title>
+  <title>Shorely — Know before you go.</title>
   <meta name="description" content="Real-time rankings of all 30 Jersey Shore beaches from Sandy Hook to Cape May. Weather, surf, water quality, tides, crowds, and parking — updated continuously.">
 
-  <!-- Favicon (SVG, sharp at every size, no fallback file needed) -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icon-192.svg">
 
-  <!-- Open Graph: shows when shared on iMessage, Slack, Discord, Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="ShoreCast — The best Jersey Shore beach right now">
+  <meta property="og:title" content="Shorely — Know before you go.">
   <meta property="og:description" content="Real-time rankings of all 30 Jersey Shore beaches. Weather, surf, water quality, tides, crowds, and parking.">
   <meta property="og:url" content="https://shorecast1.vercel.app">
   <meta property="og:image" content="https://shorecast1.vercel.app/og-image.svg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:site_name" content="ShoreCast">
+  <meta property="og:site_name" content="Shorely">
 
-  <!-- Twitter card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="ShoreCast — The best Jersey Shore beach right now">
+  <meta name="twitter:title" content="Shorely — Know before you go.">
   <meta name="twitter:description" content="Real-time rankings of all 30 Jersey Shore beaches.">
   <meta name="twitter:image" content="https://shorecast1.vercel.app/og-image.svg">
-<link rel="manifest" href="/manifest.json">
-  <link rel="apple-touch-icon" href="/icon-192.svg">
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
-    <h1>ShoreCast</h1>
-    <p class="tagline">Best Jersey Shore beaches, ranked right now</p>
+    <h1>Shorely</h1>
+    <p class="tagline">Know before you go.</p>
     <p class="last-updated" id="lastUpdated">Loading…</p>
   </header>
 
   <main>
+    <div class="intro-card">
+      <p>
+        Every Jersey Shore beach, ranked right now by a <strong>ShoreScore</strong> (0–100)
+        that blends weather, surf, water quality, tides, crowd, and parking.
+        Tap any beach to see the full breakdown.
+      </p>
+      <a href="/about" class="intro-link">How the ShoreScore works →</a>
+    </div>
+
     <div id="loading" class="loading">Checking the shore…</div>
     <div id="error" class="error" hidden></div>
     <ul id="beachList" class="beach-list"></ul>
   </main>
 
   <footer>
-    <p>Real-time data · Updated every 10 minutes</p>
+    <p>Real-time data · Updated every 10 minutes · <a href="/about" class="footer-link">How it works</a></p>
     <p class="footer-credits">
       Weather & surf via <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> ·
       Tides via <a href="https://tidesandcurrents.noaa.gov" target="_blank" rel="noopener">NOAA</a> ·
       Webcams via <a href="https://njbeachcams.com" target="_blank" rel="noopener">NJBeachCams</a>
     </p>
-    <p class="footer-credits">Built locally in NJ 🌊</p>
+    <div class="social-links">
+      <a href="https://instagram.com/shorely.io" target="_blank" rel="noopener">Instagram</a>
+      <a href="https://tiktok.com/@shorely.io" target="_blank" rel="noopener">TikTok</a>
+      <a href="https://x.com/shorely_io" target="_blank" rel="noopener">X</a>
+    </div>
+    <p class="footer-credits">Built in NJ 🌊</p>
   </footer>
 
   <script src="app.js"></script>
