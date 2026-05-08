@@ -184,6 +184,7 @@ function renderBeach(beach, rank) {
       <div class="meta">
         <div>Badge: ${beach.badgePrice === 0 ? 'Free' : '$' + beach.badgePrice}</div>
         <div>Parking: ${beach.parkingNotes}</div>
+        <div class="badge-disclaimer">Prices reflect 2026 published rates and may change. Confirm with the town before purchasing.</div>
         <span class="vibe-tag">${beach.vibe}</span>
         ${beach.webcamUrl ? `<a class="webcam-link" href="${beach.webcamUrl}" target="_blank" rel="noopener">📹 Watch live webcam →</a>` : ''}
       </div>
