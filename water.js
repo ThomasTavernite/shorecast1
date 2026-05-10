@@ -72,8 +72,9 @@ function scoreWater(r) {
 
 // Plain-English description
 function waterLabel(r, score) {
-  if (!r) return { label: 'Estimated', detail: '' };
-  if (score >= 85) return { label: 'Likely clean', detail: r.rain72hIn === 0 ? 'No recent rain' : `${r.rain72hIn}" rain past 3 days` };
+  if (!r) return { label: 'No recent sample', detail: 'Rainfall data updating — refreshes every 10 min' };
+  if (score >= 85) return { label: 'Likely clean', detail: r.rain72hIn === 0 ?
+'No recent rain' : `${r.rain72hIn}" rain past 3 days` };
   if (score >= 65) return { label: 'Fair', detail: `${r.rain72hIn}" rain past 3 days` };
   if (score >= 45) return { label: 'Use caution', detail: `${r.rain72hIn}" rain past 3 days — possible runoff` };
   return { label: 'Advisory likely', detail: `${r.rain24hIn}" rain in 24h — high runoff risk` };
