@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0d4f73">
+  <meta name="theme-color" content="#FF8C5A">
 
   <title>About Shorely — How the ShoreScore works</title>
   <meta name="description" content="How Shorely ranks Jersey Shore beaches in real time. Data sources, methodology, and the factors that go into every ShoreScore.">
@@ -16,7 +16,17 @@
   <meta property="og:title" content="About Shorely — How the ShoreScore works">
   <meta property="og:description" content="How Shorely ranks Jersey Shore beaches in real time. Data sources and methodology explained.">
   <meta property="og:url" content="https://shorely.xyz/about">
-  <meta property="og:image" content="https://shorely.xyz/og-image.svg">
+  <meta property="og:image" content="https://shorely.xyz/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="Shorely">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@shorelyapp">
+  <meta name="twitter:creator" content="@shorelyapp">
+  <meta name="twitter:title" content="About Shorely — How the ShoreScore works">
+  <meta name="twitter:description" content="How Shorely ranks Jersey Shore beaches in real time.">
+  <meta name="twitter:image" content="https://shorely.xyz/og-image.png">
 
   <link rel="stylesheet" href="style.css">
 </head>
@@ -57,8 +67,8 @@
 
     <ul class="source-list">
       <li><strong>Weather</strong> — <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>, using NOAA's HRRR model (the same high-resolution model the National Weather Service publishes for North America). Refreshed every 10 minutes.</li>
-      <li><strong>Surf & swell</strong> — Open-Meteo Marine API, sourced from the German Weather Service ICON Wave model.</li>
-      <li><strong>Tides</strong> — <a href="https://tidesandcurrents.noaa.gov" target="_blank" rel="noopener">NOAA Tides & Currents</a>. I use the three primary NJ stations (Sandy Hook, Atlantic City, Cape May) and snap each beach to its closest one.</li>
+      <li><strong>Surf &amp; swell</strong> — Open-Meteo Marine API, sourced from the German Weather Service ICON Wave model.</li>
+      <li><strong>Tides</strong> — <a href="https://tidesandcurrents.noaa.gov" target="_blank" rel="noopener">NOAA Tides &amp; Currents</a>. I use the three primary NJ stations (Sandy Hook, Atlantic City, Cape May) and snap each beach to its closest one.</li>
       <li><strong>Water quality</strong> — Estimated from rainfall data via Open-Meteo. NJDEP's official beach monitoring runs mid-May through mid-September, Mon–Fri only. I use rainfall as a year-round proxy because that's NJDEP's own primary indicator for closures. I'll integrate live NJDEP data when it's in season.</li>
       <li><strong>Crowd</strong> — Three sources, in order of priority: (1) user reports submitted directly through Shorely, (2) Google's Popular Times "Live" data when available, (3) a heuristic based on beach popularity, day of week, time of day, weather, and holidays.</li>
       <li><strong>Webcams</strong> — Linked from <a href="https://njbeachcams.com" target="_blank" rel="noopener">NJBeachCams</a>, the public-facing service from Coastal Camera Network.</li>
@@ -73,6 +83,7 @@
       I am not affiliated with NJDEP, NOAA, the National Park Service, or any
       Jersey Shore town.
     </p>
+
     <p>
       <strong>About the weather data:</strong> Shorely pulls weather forecasts
       from NOAA's HRRR model via Open-Meteo. Different weather services
@@ -82,6 +93,7 @@
       for a coastal location at any given second. Always trust your eyes and
       the forecast on your phone for final decisions.
     </p>
+
     <p>
       <strong>About badge prices:</strong> All beach badge prices listed on Shorely
       reflect 2026 published rates as of May 2026, sourced primarily from the
@@ -96,21 +108,29 @@
       Picking the right Jersey Shore beach on a given day used to mean checking
       five different sites: weather here, water advisories there, tides on a
       government PDF, parking notes on a town's Facebook page. Shorely brings
-      all of that into one ranked list so you can answer one question fast:
-      <strong>which beach is worth it today?</strong>
+      all of that into one ranked list so you can answer one question fast: <strong>which beach is worth it today?</strong>
     </p>
+
     <p>
-      I'm an independent NJ developer running this as a one-person project. No
+      I'm Thomas Tavernite, an independent NJ developer running this as a one-person project. No
       ads, no investors, no data reselling. Built by someone who actually goes
       to these beaches.
     </p>
 
+    <h3 id="privacy">Privacy</h3>
+    <p>
+      Shorely doesn't collect personal data. We don't run ads, sell data, or use
+      trackers beyond standard analytics for understanding aggregate site traffic.
+      Contact: <a href="mailto:thomas@shorely.xyz">thomas@shorely.xyz</a>
+    </p>
+
     <h3>Have feedback?</h3>
     <p>
-      Notice bad data, a missing beach, or a feature you'd love? DM me on
-      <a href="https://instagram.com/shorely.io" target="_blank" rel="noopener">Instagram</a>,
-      <a href="https://tiktok.com/@shorely.io" target="_blank" rel="noopener">TikTok</a>, or
-      <a href="https://x.com/shorely_io" target="_blank" rel="noopener">X</a>.
+      Notice bad data, a missing beach, or a feature you'd love? Email me at
+      <a href="mailto:thomas@shorely.xyz">thomas@shorely.xyz</a> or DM on
+      <a href="https://instagram.com/shorelyapp" target="_blank" rel="noopener">Instagram</a>,
+      <a href="https://tiktok.com/@shorelyapp" target="_blank" rel="noopener">TikTok</a>, or
+      <a href="https://x.com/ShorelyApp" target="_blank" rel="noopener">X</a>.
     </p>
 
     <a href="/" class="back-link">← Back to beaches</a>
@@ -119,16 +139,20 @@
   <footer>
     <p>Real-time data · Updated every 10 minutes</p>
     <p class="footer-credits">
-      Weather & surf via <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> ·
+      Weather &amp; surf via <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> ·
       Tides via <a href="https://tidesandcurrents.noaa.gov" target="_blank" rel="noopener">NOAA</a> ·
       Webcams via <a href="https://njbeachcams.com" target="_blank" rel="noopener">NJBeachCams</a>
     </p>
     <div class="social-links">
-      <a href="https://instagram.com/shorely.io" target="_blank" rel="noopener">Instagram</a>
-      <a href="https://tiktok.com/@shorely.io" target="_blank" rel="noopener">TikTok</a>
-      <a href="https://x.com/shorely_io" target="_blank" rel="noopener">X</a>
+      <a href="https://instagram.com/shorelyapp" target="_blank" rel="noopener" aria-label="Instagram">Instagram</a>
+      <a href="https://tiktok.com/@shorelyapp" target="_blank" rel="noopener" aria-label="TikTok">TikTok</a>
+      <a href="https://x.com/ShorelyApp" target="_blank" rel="noopener" aria-label="X">X</a>
     </div>
-    <p class="footer-credits">Built in NJ 🌊</p>
+    <p class="footer-credits">
+      Contact: <a href="mailto:thomas@shorely.xyz">thomas@shorely.xyz</a> ·
+      <a href="/about#privacy">Privacy</a>
+    </p>
+    <p class="footer-credits">Built in NJ by Thomas Tavernite 🌊</p>
   </footer>
 </body>
 </html>
