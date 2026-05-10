@@ -37,7 +37,7 @@
     <p class="last-updated" id="lastUpdated">Loading…</p>
   </header>
 
- <section class="intro" style="max-width:720px;margin:0 auto;padding:20px 20px 8px;text-align:center;">
+  <section class="intro" style="max-width:720px;margin:0 auto;padding:20px 20px 8px;text-align:center;">
     <p style="font-size:0.95rem;color:#0a4d6e;line-height:1.55;margin:0 0 10px;">
       Every Jersey Shore beach, ranked right now by a <strong>ShoreScore</strong> (0–100)
       that blends weather, surf, water quality, tides, crowd, and parking.
@@ -72,124 +72,5 @@
   </footer>
 
   <script src="app.js"></script>
-
-  <!-- Share button feature - self-contained, no app.js changes required -->
-  <script>
-  (function() {
-    const beachList = document.getElementById('beachList');
-    if (!beachList) return;
-
-    // Watch for new beach cards being rendered, inject share button
-    const observer = new MutationObserver(() => addShareButtons());
-    observer.observe(beachList, { childList: true, subtree: true });
-
-    function addShareButtons() {
-      const cards = beachList.querySelectorAll('li');
-      cards.forEach(card => {
-        if (card.querySelector('.shorely-share-btn')) return;
-
-        const nameEl = card.querySelector('.beach-name, h3, h2');
-        const scoreEl = card.querySelector('.score, .shore-score, .beach-score');
-        const beachName = nameEl ? nameEl.textContent.trim() : '';
-        const score = scoreEl ? scoreEl.textContent.trim().replace(/[^\d]/g, '') : '';
-
-        const btn = document.createElement('button');
-        btn.className = 'shorely-share-btn';
-        btn.setAttribute('aria-label', 'Share this beach');
-        btn.title = 'Share';
-btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';        btn.dataset.beachName = beachName;
-        btn.dataset.beachScore = score;
-
-        btn.style.cssText = [
-          'position:absolute',
-          'bottom:12px',
-          'right:14px',
-          'width:30px',
-          'height:30px',
-          'border-radius:50%',
-          'border:1px solid #e2e8f0',
-          'background:#ffffff',
-          'color:#0077B6',
-          'cursor:pointer',
-          'z-index:10',
-          'display:flex',
-          'align-items:center',
-          'justify-content:center',
-          'padding:0',
-          'transition:background 0.15s, transform 0.1s, box-shadow 0.15s',
-          'box-shadow:0 1px 2px rgba(0,0,0,0.04)',
-          'opacity:0.85'
-        ].join(';');
-
-        btn.addEventListener('mouseenter', () => {
-          btn.style.background = '#F0F9FF';
-          btn.style.boxShadow = '0 2px 6px rgba(0,0,0,0.10)';
-        });
-        btn.addEventListener('mouseleave', () => {
-          btn.style.background = '#ffffff';
-          btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
-        });
-
-        if (getComputedStyle(card).position === 'static') {
-          card.style.position = 'relative';
-        }
-        card.appendChild(btn);
-      });
-    }
-
-    // Single click handler via delegation
-    document.addEventListener('click', async (e) => {
-      const btn = e.target.closest('.shorely-share-btn');
-      if (!btn) return;
-
-      e.stopPropagation();
-      e.preventDefault();
-
-      const beachName = btn.dataset.beachName || '';
-      const score = btn.dataset.beachScore || '';
-      const url = 'https://shorely.xyz/';
-      const title = 'Shorely — Know before you go.';
-      const text = beachName
-        ? (score
-            ? beachName + ' is ' + score + ' on Shorely 🌅'
-            : 'Check ' + beachName + ' on Shorely 🌅')
-        : 'Check the Jersey Shore on Shorely 🌅';
-
-      // Web Share API (mobile / supported browsers)
-      if (navigator.share) {
-        try {
-          await navigator.share({ title, text, url });
-          return;
-        } catch (err) {
-          if (err && err.name === 'AbortError') return;
-        }
-      }
-
-      // Clipboard fallback (desktop)
-      try {
-        await navigator.clipboard.writeText(text + ' ' + url);
-        showCopiedFeedback(btn);
-      } catch (err) {
-        prompt('Copy this link:', text + ' ' + url);
-      }
-    });
-
-    function showCopiedFeedback(btn) {
-      const original = btn.innerHTML;
-      const originalBg = btn.style.background;
-      const originalColor = btn.style.color;
-      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-      btn.style.background = '#10B981';
-      btn.style.color = '#ffffff';
-      btn.style.borderColor = '#10B981';
-      setTimeout(() => {
-        btn.innerHTML = original;
-        btn.style.background = originalBg || '#ffffff';
-        btn.style.color = originalColor || '#0077B6';
-        btn.style.borderColor = '#cbd5e1';
-      }, 1500);
-    }
-  })();
-  </script>
 </body>
 </html>
