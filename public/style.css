@@ -609,6 +609,13 @@ footer {
 }
 
 /* ===== ASK SHORELY CHAT ===== */
+
+/* Critical: respect hidden attribute (flex was overriding display:none) */
+.ch-fab[hidden],
+.ch-panel[hidden] {
+  display: none !important;
+}
+
 .ch-fab {
   position: fixed;
   bottom: 20px;
@@ -766,6 +773,7 @@ footer {
 }
 .ch-back:hover { background: var(--peach); border-color: var(--coral-soft); }
 
+/* ===== MOBILE — roomier spacing for phones ===== */
 @media (max-width: 480px) {
   .ch-fab {
     bottom: 16px;
