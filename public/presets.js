@@ -3,22 +3,28 @@
 // No backend changes required
 
 (function() {
+  const VIBE_OPTIONS = [
+    { vibe: 'family',  icon: '👨‍👩‍👧', label: 'Family-friendly' },
+    { vibe: 'lively',  icon: '🎢', label: 'Lively / boardwalk' },
+    { vibe: 'quiet',   icon: '🤫', label: 'Quiet & low-key' },
+    { vibe: 'surf',    icon: '🏄', label: 'Surfing' },
+    { vibe: 'wild',    icon: '🌿', label: 'Wild / natural' },
+    { vibe: 'classic', icon: '🌅', label: 'Classic shore' }
+  ];
+
   const PRESETS = [
-    { id: 'near-me',    icon: '📍', label: 'Best beach near me',           run: filterNearMe },
-    { id: 'family',     icon: '👨‍👩‍👧', label: 'Family-friendly today',      run: () => filterByVibe('family') },
-    { id: 'quiet',      icon: '🤫', label: 'Quiet beaches today',          run: () => filterByVibe('quiet') },
-    { id: 'lively',     icon: '🎢', label: 'Lively beaches today',         run: () => filterByVibe('lively') },
-    { id: 'surf',       icon: '🏄', label: 'Best for surfing today',       run: () => filterByVibe('surf') },
-    { id: 'wild',       icon: '🌿', label: 'Wild / natural beaches',       run: () => filterByVibe('wild') },
-    { id: 'low-crowd',  icon: '🟢', label: 'Where are the crowds lightest?', run: filterLowCrowd },
-    { id: 'free',       icon: '💸', label: 'Free beaches (no badge)',      run: filterFree },
-    { id: 'top-3',      icon: '🏆', label: "Today's top 3 overall",        run: filterTop3 }
+    { id: 'near-me',   icon: '📍', label: 'Best beach near me',       run: filterNearMe },
+    { id: 'top-3',     icon: '🏆', label: "Today's top 3",            run: filterTop3 },
+    { id: 'low-crowd', icon: '🟢', label: 'Where it\'s least crowded', run: filterLowCrowd },
+    { id: 'free',      icon: '💸', label: 'Free beaches (no badge)',  run: filterFree },
+    { id: 'vibe',      icon: '✨', label: 'Browse by vibe',           run: null /* opens submenu */ },
+    { id: 'all',       icon: '📋', label: 'See all 30 ranked',        run: filterAll }
   ];
 
   let cachedBeaches = null;
   let userCoords = null;
 
-  // ===== Data fetch (uses existing endpoint, no new backend) =====
+  // ===== Data fetch =====
   async function getBeaches() {
     if (cachedBeaches) return cachedBeaches;
     const res = await fetch('/api/beaches');
@@ -34,29 +40,25 @@
       beaches.filter(b => b.vibe === vibe).slice(0, 5)
     );
   }
-
   function filterLowCrowd() {
     return getBeaches().then(beaches =>
       [...beaches].sort((a, b) => b.factors.crowd - a.factors.crowd).slice(0, 5)
     );
   }
-
   function filterFree() {
     return getBeaches().then(beaches =>
       beaches.filter(b => b.badgePrice === 0).slice(0, 5)
     );
   }
-
   function filterTop3() {
     return getBeaches().then(beaches => beaches.slice(0, 3));
   }
-
+  function filterAll() {
+    return getBeaches().then(beaches => beaches);
+  }
   function filterNearMe() {
     return new Promise((resolve, reject) => {
-      if (userCoords) {
-        resolve(rankByDistance(userCoords));
-        return;
-      }
+      if (userCoords) { resolve(rankByDistance(userCoords)); return; }
       if (!navigator.geolocation) {
         reject(new Error('Geolocation not supported by your browser'));
         return;
@@ -71,21 +73,18 @@
       );
     });
   }
-
   async function rankByDistance(coords) {
     const beaches = await getBeaches();
     const withDist = beaches.map(b => ({
       ...b,
       _distMi: haversine(coords.lat, coords.lon, b.lat, b.lon)
     }));
-    // Top score within 30 miles, otherwise nearest 5
     const nearby = withDist.filter(b => b._distMi <= 30);
     const pool = nearby.length >= 3 ? nearby : withDist.slice().sort((a, b) => a._distMi - b._distMi).slice(0, 5);
     return pool.sort((a, b) => b.shoreScore - a.shoreScore).slice(0, 5);
   }
-
   function haversine(lat1, lon1, lat2, lon2) {
-    const R = 3959; // miles
+    const R = 3959;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
@@ -115,7 +114,9 @@
   function renderResults(beaches, intro) {
     const root = document.getElementById('ch-results');
     if (!beaches || beaches.length === 0) {
-      root.innerHTML = `<div class="ch-empty">No beaches matched that filter right now. Try another option!</div>`;
+      root.innerHTML = `<div class="ch-empty">No beaches matched right now. Try another option!</div>
+        <button class="ch-back" id="ch-back">← Ask something else</button>`;
+      document.getElementById('ch-back').addEventListener('click', renderPresets);
       return;
     }
     root.innerHTML = `
@@ -123,6 +124,38 @@
       ${beaches.map(renderBeach).join('')}
       <button class="ch-back" id="ch-back">← Ask something else</button>
     `;
+    document.getElementById('ch-back').addEventListener('click', renderPresets);
+  }
+
+  function renderVibeMenu() {
+    const root = document.getElementById('ch-results');
+    root.innerHTML = `
+      <div class="ch-greeting">What kind of beach are you in the mood for?</div>
+      <div class="ch-presets">
+        ${VIBE_OPTIONS.map(v => `
+          <button class="ch-preset" data-vibe="${v.vibe}">
+            <span class="ch-preset-icon">${v.icon}</span>
+            <span class="ch-preset-label">${v.label}</span>
+          </button>
+        `).join('')}
+      </div>
+      <button class="ch-back" id="ch-back">← Back</button>
+    `;
+    root.querySelectorAll('.ch-preset').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const vibe = btn.dataset.vibe;
+        const option = VIBE_OPTIONS.find(v => v.vibe === vibe);
+        root.innerHTML = `<div class="ch-loading">Checking the shore…</div>`;
+        try {
+          const beaches = await filterByVibe(vibe);
+          renderResults(beaches, option.label);
+        } catch (err) {
+          root.innerHTML = `<div class="ch-error">${err.message}</div>
+            <button class="ch-back" id="ch-back">← Back</button>`;
+          document.getElementById('ch-back').addEventListener('click', renderPresets);
+        }
+      });
+    });
     document.getElementById('ch-back').addEventListener('click', renderPresets);
   }
 
@@ -145,6 +178,10 @@
   }
 
   async function handlePreset(id) {
+    if (id === 'vibe') {
+      renderVibeMenu();
+      return;
+    }
     const preset = PRESETS.find(p => p.id === id);
     if (!preset) return;
     const root = document.getElementById('ch-results');
@@ -153,10 +190,9 @@
       const beaches = await preset.run();
       renderResults(beaches, preset.label);
     } catch (err) {
-      root.innerHTML = `
-        <div class="ch-error">${err.message || 'Something went wrong'}</div>
-        <button class="ch-back" onclick="(${renderPresets.toString()})()">← Back</button>
-      `;
+      root.innerHTML = `<div class="ch-error">${err.message || 'Something went wrong'}</div>
+        <button class="ch-back" id="ch-back">← Back</button>`;
+      document.getElementById('ch-back').addEventListener('click', renderPresets);
     }
   }
 
@@ -164,7 +200,6 @@
   function mount() {
     const root = document.getElementById('chat-root');
     if (!root) return;
-
     root.innerHTML = `
       <button class="ch-fab" id="ch-fab" aria-label="Ask Shorely">
         <span class="ch-fab-emoji">🌊</span>
@@ -178,13 +213,11 @@
         <div class="ch-body" id="ch-results"></div>
       </div>
     `;
-
     document.getElementById('ch-fab').addEventListener('click', () => {
       document.getElementById('ch-panel').hidden = false;
       document.getElementById('ch-fab').hidden = true;
       renderPresets();
     });
-
     document.getElementById('ch-close').addEventListener('click', () => {
       document.getElementById('ch-panel').hidden = true;
       document.getElementById('ch-fab').hidden = false;
