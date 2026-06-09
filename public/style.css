@@ -767,8 +767,59 @@ footer {
 .ch-back:hover { background: var(--peach); border-color: var(--coral-soft); }
 
 @media (max-width: 480px) {
-  .ch-fab { bottom: 16px; right: 16px; padding: 12px 18px; }
-  .ch-panel { bottom: 0; right: 0; left: 0; width: 100%; max-width: 100%; border-radius: 22px 22px 0 0; max-height: 80vh; }
+  .ch-fab {
+    bottom: 16px;
+    right: 16px;
+    padding: 12px 18px;
+  }
+  .ch-panel {
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 22px 22px 0 0;
+    max-height: 82vh;
+  }
+  .ch-header { padding: 13px 18px; }
+  .ch-title { font-size: 0.95rem; }
+  .ch-body { padding: 20px 16px 24px; }
+
+  .ch-greeting {
+    font-size: 0.95rem;
+    margin-bottom: 16px;
+    line-height: 1.45;
+  }
+  .ch-intro {
+    font-size: 0.95rem;
+    margin-bottom: 14px;
+  }
+
+  .ch-presets { gap: 10px; }
+  .ch-preset {
+    padding: 14px 16px;
+    font-size: 0.92rem;
+    gap: 14px;
+  }
+  .ch-preset-icon { font-size: 1.4rem; }
+
+  .ch-result {
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    gap: 14px;
+  }
+  .ch-result-name { font-size: 1rem; }
+  .ch-result-town { font-size: 0.78rem; margin-top: 3px; }
+  .ch-result-score {
+    font-size: 1.6rem;
+    min-width: 48px;
+  }
+
+  .ch-back {
+    margin-top: 18px;
+    padding: 12px;
+    font-size: 0.9rem;
+  }
 }
 
 /* Override default hidden behavior — display:flex was beating display:none */
