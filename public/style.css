@@ -770,3 +770,9 @@ footer {
   .ch-fab { bottom: 16px; right: 16px; padding: 12px 18px; }
   .ch-panel { bottom: 0; right: 0; left: 0; width: 100%; max-width: 100%; border-radius: 22px 22px 0 0; max-height: 80vh; }
 }
+
+/* Override default hidden behavior — display:flex was beating display:none */
+.ch-fab[hidden],
+.ch-panel[hidden] {
+  display: none !important;
+}
