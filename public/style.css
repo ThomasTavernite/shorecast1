@@ -778,52 +778,48 @@ footer {
     left: 0;
     width: 100%;
     max-width: 100%;
-    border-radius: 22px 22px 0 0;
-    max-height: 82vh;
+    border-radius: 24px 24px 0 0;
+    max-height: 85vh;
   }
-  .ch-header { padding: 13px 18px; }
-  .ch-title { font-size: 0.95rem; }
-  .ch-body { padding: 20px 16px 24px; }
+  .ch-header { padding: 16px 20px; }
+  .ch-title { font-size: 1rem; }
+  .ch-close { width: 34px; height: 34px; font-size: 1.4rem; }
+
+  .ch-body { padding: 22px 18px 28px; }
 
   .ch-greeting {
-    font-size: 0.95rem;
-    margin-bottom: 16px;
-    line-height: 1.45;
+    font-size: 0.98rem;
+    margin-bottom: 22px;
+    line-height: 1.5;
   }
   .ch-intro {
-    font-size: 0.95rem;
-    margin-bottom: 14px;
+    font-size: 1rem;
+    margin-bottom: 18px;
   }
 
-  .ch-presets { gap: 10px; }
+  .ch-presets { gap: 14px; }
   .ch-preset {
-    padding: 14px 16px;
-    font-size: 0.92rem;
-    gap: 14px;
+    padding: 18px 18px;
+    font-size: 0.96rem;
+    gap: 16px;
   }
-  .ch-preset-icon { font-size: 1.4rem; }
+  .ch-preset-icon { font-size: 1.5rem; }
 
   .ch-result {
-    padding: 14px 16px;
-    margin-bottom: 10px;
-    gap: 14px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+    gap: 16px;
   }
-  .ch-result-name { font-size: 1rem; }
-  .ch-result-town { font-size: 0.78rem; margin-top: 3px; }
+  .ch-result-name { font-size: 1.05rem; }
+  .ch-result-town { font-size: 0.82rem; margin-top: 4px; }
   .ch-result-score {
-    font-size: 1.6rem;
-    min-width: 48px;
+    font-size: 1.75rem;
+    min-width: 52px;
   }
 
   .ch-back {
-    margin-top: 18px;
-    padding: 12px;
-    font-size: 0.9rem;
+    margin-top: 22px;
+    padding: 14px;
+    font-size: 0.92rem;
   }
-}
-
-/* Override default hidden behavior — display:flex was beating display:none */
-.ch-fab[hidden],
-.ch-panel[hidden] {
-  display: none !important;
 }
