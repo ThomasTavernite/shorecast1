@@ -60,7 +60,6 @@ header {
   overflow: hidden;
 }
 
-/* sun in the corner */
 header::before {
   content: '';
   position: absolute;
@@ -73,7 +72,6 @@ header::before {
   opacity: 0.85;
 }
 
-/* wavy bottom edge */
 header::after {
   content: '';
   position: absolute;
@@ -112,7 +110,6 @@ header h1 {
   z-index: 1;
 }
 
-/* ===== MAIN ===== */
 main {
   flex: 1;
   max-width: 640px;
@@ -158,7 +155,6 @@ main {
 
 .error { color: var(--bad); }
 
-/* ===== BEACH CARDS ===== */
 .beach-list {
   list-style: none;
   display: flex;
@@ -185,7 +181,6 @@ main {
   border-color: var(--sand-warm);
 }
 
-/* Top 3 ranks get a colored top stripe */
 .beach-card.top-rank::before {
   content: '';
   position: absolute;
@@ -245,7 +240,6 @@ main {
 
 .beach-card.expanded .beach-details { display: block; }
 
-/* ===== WEATHER SUMMARY ===== */
 .weather-summary {
   display: flex;
   align-items: center;
@@ -292,7 +286,6 @@ main {
   line-height: 1.4;
 }
 
-/* ===== SURF / WATER / TIDE / CROWD / PARKING SUMMARIES ===== */
 .surf-summary,
 .water-summary,
 .tide-summary,
@@ -341,7 +334,6 @@ main {
   font-weight: 700;
 }
 
-/* ===== REPORT BLOCK ===== */
 .report-block {
   background: linear-gradient(135deg, #fff8ec 0%, #ffeec4 100%);
   border: 1px dashed var(--sand-warm);
@@ -393,7 +385,6 @@ main {
   padding: 6px 0;
 }
 
-/* ===== FACTORS ===== */
 .factors {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -424,7 +415,6 @@ main {
   font-size: 0.95rem;
 }
 
-/* ===== META ===== */
 .meta {
   font-size: 0.85rem;
   color: var(--muted);
@@ -442,7 +432,6 @@ main {
   line-height: 1.4;
 }
 
-/* ===== VIBE TAGS (color-coded per vibe) ===== */
 .vibe-tag {
   display: inline-block;
   padding: 4px 12px;
@@ -464,7 +453,6 @@ main {
 .vibe-quiet { background: #e0ecdb; color: var(--vibe-quiet); }
 .vibe-wild { background: #d6e1d0; color: var(--vibe-wild); }
 
-/* ===== WEBCAM LINK ===== */
 .webcam-link {
   display: inline-block;
   margin-top: 8px;
@@ -483,7 +471,6 @@ main {
 .webcam-link:hover { box-shadow: 0 4px 12px rgba(255, 126, 95, 0.35); }
 .webcam-link:active { transform: scale(0.97); }
 
-/* ===== FOOTER ===== */
 footer {
   text-align: center;
   padding: 24px 20px 32px;
@@ -536,7 +523,6 @@ footer {
 }
 .social-links a:active { transform: scale(0.95); }
 
-/* ===== ABOUT PAGE ===== */
 .about {
   max-width: 720px;
   padding: 24px 20px 40px;
@@ -610,7 +596,6 @@ footer {
 
 /* ===== ASK SHORELY CHAT ===== */
 
-/* Critical: respect hidden attribute (flex was overriding display:none) */
 .ch-fab[hidden],
 .ch-panel[hidden] {
   display: none !important;
@@ -773,12 +758,12 @@ footer {
 }
 .ch-back:hover { background: var(--peach); border-color: var(--coral-soft); }
 
-/* ===== MOBILE — roomier spacing for phones ===== */
 @media (max-width: 480px) {
   .ch-fab {
-    bottom: 16px;
-    right: 16px;
-    padding: 12px 18px;
+    bottom: 18px;
+    right: 18px;
+    padding: 13px 20px;
+    font-size: 1rem;
   }
   .ch-panel {
     bottom: 0;
@@ -786,48 +771,50 @@ footer {
     left: 0;
     width: 100%;
     max-width: 100%;
-    border-radius: 24px 24px 0 0;
-    max-height: 85vh;
+    border-radius: 26px 26px 0 0;
+    max-height: 88vh;
   }
-  .ch-header { padding: 18px 22px; }
-  .ch-title { font-size: 1.05rem; }
-  .ch-close { width: 36px; height: 36px; font-size: 1.5rem; }
+  .ch-header { padding: 22px 24px; }
+  .ch-title { font-size: 1.15rem; }
+  .ch-close { width: 40px; height: 40px; font-size: 1.6rem; }
 
-  .ch-body { padding: 26px 20px 32px; }
+  .ch-body { padding: 30px 22px 36px; }
 
   .ch-greeting {
-    font-size: 1rem;
-    margin-bottom: 26px;
-    line-height: 1.5;
+    font-size: 1.05rem;
+    margin-bottom: 32px;
+    line-height: 1.55;
   }
   .ch-intro {
-    font-size: 1.05rem;
-    margin-bottom: 22px;
+    font-size: 1.1rem;
+    margin-bottom: 26px;
   }
 
-  .ch-presets { gap: 16px; }
+  .ch-presets { gap: 18px; }
   .ch-preset {
-    padding: 20px 20px;
-    font-size: 1rem;
-    gap: 18px;
+    padding: 24px 22px;
+    font-size: 1.05rem;
+    gap: 20px;
+    border-radius: 16px;
   }
-  .ch-preset-icon { font-size: 1.55rem; }
+  .ch-preset-icon { font-size: 1.7rem; }
 
   .ch-result {
-    padding: 18px 20px;
-    margin-bottom: 16px;
-    gap: 18px;
+    padding: 22px 22px;
+    margin-bottom: 18px;
+    gap: 20px;
+    border-radius: 16px;
   }
-  .ch-result-name { font-size: 1.08rem; }
-  .ch-result-town { font-size: 0.85rem; margin-top: 5px; }
+  .ch-result-name { font-size: 1.12rem; }
+  .ch-result-town { font-size: 0.88rem; margin-top: 6px; }
   .ch-result-score {
-    font-size: 1.8rem;
-    min-width: 54px;
+    font-size: 1.95rem;
+    min-width: 56px;
   }
 
   .ch-back {
-    margin-top: 26px;
-    padding: 16px;
-    font-size: 0.95rem;
+    margin-top: 30px;
+    padding: 18px;
+    font-size: 1rem;
   }
 }

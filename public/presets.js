@@ -17,8 +17,7 @@
     { id: 'top-3',     icon: '🏆', label: "Today's top 3",            run: filterTop3 },
     { id: 'low-crowd', icon: '🟢', label: 'Where it\'s least crowded', run: filterLowCrowd },
     { id: 'free',      icon: '💸', label: 'Free beaches (no badge)',  run: filterFree },
-    { id: 'vibe',      icon: '✨', label: 'Browse by vibe',           run: null /* opens submenu */ },
-    { id: 'all',       icon: '📋', label: 'See all 30 ranked',        run: filterAll }
+    { id: 'vibe',      icon: '✨', label: 'Browse by vibe',           run: null /* opens submenu */ }
   ];
 
   let cachedBeaches = null;
@@ -52,9 +51,6 @@
   }
   function filterTop3() {
     return getBeaches().then(beaches => beaches.slice(0, 3));
-  }
-  function filterAll() {
-    return getBeaches().then(beaches => beaches);
   }
   function filterNearMe() {
     return new Promise((resolve, reject) => {
