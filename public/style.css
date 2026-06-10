@@ -772,7 +772,8 @@ footer {
     width: 100%;
     max-width: 100%;
     border-radius: 26px 26px 0 0;
-    max-height: 88vh;
+    max-height: 78vh;
+    top: auto;
   }
   .ch-header { padding: 22px 24px; }
   .ch-title { font-size: 1.15rem; }

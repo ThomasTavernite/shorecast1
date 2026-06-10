@@ -20,6 +20,8 @@
     { id: 'vibe',      icon: '✨', label: 'Browse by vibe',           run: null /* opens submenu */ }
   ];
 
+  const RESULT_LIMIT = 3;
+
   let cachedBeaches = null;
   let userCoords = null;
 
@@ -33,24 +35,24 @@
     return cachedBeaches;
   }
 
-  // ===== Filters =====
+  // ===== Filters (always return 3) =====
   function filterByVibe(vibe) {
     return getBeaches().then(beaches =>
-      beaches.filter(b => b.vibe === vibe).slice(0, 5)
+      beaches.filter(b => b.vibe === vibe).slice(0, RESULT_LIMIT)
     );
   }
   function filterLowCrowd() {
     return getBeaches().then(beaches =>
-      [...beaches].sort((a, b) => b.factors.crowd - a.factors.crowd).slice(0, 5)
+      [...beaches].sort((a, b) => b.factors.crowd - a.factors.crowd).slice(0, RESULT_LIMIT)
     );
   }
   function filterFree() {
     return getBeaches().then(beaches =>
-      beaches.filter(b => b.badgePrice === 0).slice(0, 5)
+      beaches.filter(b => b.badgePrice === 0).slice(0, RESULT_LIMIT)
     );
   }
   function filterTop3() {
-    return getBeaches().then(beaches => beaches.slice(0, 3));
+    return getBeaches().then(beaches => beaches.slice(0, RESULT_LIMIT));
   }
   function filterNearMe() {
     return new Promise((resolve, reject) => {
@@ -76,8 +78,8 @@
       _distMi: haversine(coords.lat, coords.lon, b.lat, b.lon)
     }));
     const nearby = withDist.filter(b => b._distMi <= 30);
-    const pool = nearby.length >= 3 ? nearby : withDist.slice().sort((a, b) => a._distMi - b._distMi).slice(0, 5);
-    return pool.sort((a, b) => b.shoreScore - a.shoreScore).slice(0, 5);
+    const pool = nearby.length >= 3 ? nearby : withDist.slice().sort((a, b) => a._distMi - b._distMi).slice(0, RESULT_LIMIT);
+    return pool.sort((a, b) => b.shoreScore - a.shoreScore).slice(0, RESULT_LIMIT);
   }
   function haversine(lat1, lon1, lat2, lon2) {
     const R = 3959;
