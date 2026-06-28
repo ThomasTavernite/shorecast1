@@ -38,9 +38,14 @@ const PARKING_CAPACITY = {
   'beach-haven': 3,
   'atlantic-city': 5,      // casino garages, never full
   'ventnor': 3,
+  'longport': 2,           // free street but limited residential streets, fills on nice days
   'ocean-city': 3,         // popular but lots of metered
   'sea-isle-city': 3,
   'avalon': 3,
+  'stone-harbor': 3,       // decent metered/free street, manageable in season
+  'north-wildwood': 4,     // big free beach, lots of street + lot parking
+  'wildwood': 4,           // boardwalk lots + wide metered streets, high supply
+  'wildwood-crest': 4,     // free street parking, quieter, easy to park
   'cape-may': 2            // metered, fills fast in season
 };
 

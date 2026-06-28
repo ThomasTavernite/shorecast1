@@ -33,9 +33,14 @@ const POPULARITY = {
   'beach-haven': 4,
   'atlantic-city': 4,      // casinos draw crowds
   'ventnor': 3,
+  'longport': 1,           // quiet residential tip of Absecon Island
   'ocean-city': 5,         // family destination, packed
   'sea-isle-city': 4,
   'avalon': 3,
+  'stone-harbor': 3,       // upscale family town, busy but not boardwalk-chaotic
+  'north-wildwood': 4,     // free + huge beach draws crowds, but wide enough to absorb
+  'wildwood': 5,           // boardwalk magnet, free beach, major tourist draw
+  'wildwood-crest': 3,     // free & wide but residential, quieter than Wildwood
   'cape-may': 4
 };
 

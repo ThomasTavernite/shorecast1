@@ -115,7 +115,8 @@ function oceanTempSnippet(ot) {
     </div>
   `;
 }
-// Next-12-hours forecast strip
+
+// Next-12-hours forecast strip (accessible, scrollable)
 function hourlyStrip(hours) {
   if (!hours || !hours.length) return '';
   const cells = hours.map(h => {
@@ -137,9 +138,80 @@ function hourlyStrip(hours) {
   return `
     <div class="hourly-block">
       <div class="forecast-heading">Next 12 hours</div>
-      <div class="hourly-scroll">${cells}</div>
+      <div class="hourly-wrap">
+        <button class="hr-nav hr-prev" type="button" aria-label="Show earlier hours">‹</button>
+        <div class="hourly-scroll" role="group" aria-label="Hourly forecast for the next 12 hours" tabindex="0">${cells}</div>
+        <button class="hr-nav hr-next" type="button" aria-label="Show later hours">›</button>
+      </div>
     </div>
   `;
+}
+
+// Wire up the accessible interactions for a card's hourly strip
+function wireHourlyStrip(li) {
+  const scroll = li.querySelector('.hourly-scroll');
+  if (!scroll) return;
+  const prev = li.querySelector('.hr-prev');
+  const next = li.querySelector('.hr-next');
+  const step = () => Math.max(120, Math.round(scroll.clientWidth * 0.8));
+
+  function updateArrows() {
+    const max = scroll.scrollWidth - scroll.clientWidth - 1;
+    const x = scroll.scrollLeft;
+    if (prev) prev.disabled = x <= 0;
+    if (next) next.disabled = x >= max;
+  }
+  // expose so the card can refresh arrow state when it expands
+  li._updateHrArrows = updateArrows;
+
+  if (prev) prev.addEventListener('click', (e) => {
+    e.stopPropagation();
+    scroll.scrollBy({ left: -step(), behavior: 'smooth' });
+  });
+  if (next) next.addEventListener('click', (e) => {
+    e.stopPropagation();
+    scroll.scrollBy({ left: step(), behavior: 'smooth' });
+  });
+
+  scroll.addEventListener('scroll', updateArrows, { passive: true });
+
+  // Mouse wheel -> horizontal scroll (desktop)
+  scroll.addEventListener('wheel', (e) => {
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return; // already a horizontal gesture
+    if (scroll.scrollWidth <= scroll.clientWidth) return; // nothing to scroll
+    e.preventDefault();
+    scroll.scrollLeft += e.deltaY;
+  }, { passive: false });
+
+  // Keyboard support when the strip is focused
+  scroll.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); scroll.scrollBy({ left: step(), behavior: 'smooth' }); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); scroll.scrollBy({ left: -step(), behavior: 'smooth' }); }
+    else if (e.key === 'Home') { e.preventDefault(); scroll.scrollTo({ left: 0, behavior: 'smooth' }); }
+    else if (e.key === 'End') { e.preventDefault(); scroll.scrollTo({ left: scroll.scrollWidth, behavior: 'smooth' }); }
+  });
+
+  // Click-and-drag to scroll (desktop pointer; touch uses native scroll)
+  let dragging = false, startX = 0, startLeft = 0, moved = false;
+  scroll.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'touch') return;
+    dragging = true; moved = false;
+    startX = e.clientX; startLeft = scroll.scrollLeft;
+    scroll.classList.add('dragging');
+  });
+  scroll.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    if (Math.abs(dx) > 3) moved = true;
+    scroll.scrollLeft = startLeft - dx;
+  });
+  const endDrag = () => { dragging = false; scroll.classList.remove('dragging'); };
+  scroll.addEventListener('pointerup', endDrag);
+  scroll.addEventListener('pointerleave', endDrag);
+  // swallow the click that follows a drag so it doesn't do anything unexpected
+  scroll.addEventListener('click', (e) => { if (moved) { e.stopPropagation(); e.preventDefault(); } });
+
+  requestAnimationFrame(updateArrows);
 }
 
 // Tomorrow's forecast summary
@@ -157,8 +229,6 @@ function tomorrowSnippet(tm) {
     </div>
   `;
 }
-
-function submitReportFactory() {} // (placeholder removed — submitReport defined below)
 
 async function submitReport(beachId, level, btnEl) {
   btnEl.disabled = true;
@@ -281,8 +351,12 @@ function renderBeach(beach, rank) {
   `;
 
   li.addEventListener('click', (e) => {
-    if (e.target.closest('.report-btn') || e.target.closest('.report-block')) return;
+    // don't collapse the card when interacting with reports or the forecast strip
+    if (e.target.closest('.report-btn') || e.target.closest('.report-block') || e.target.closest('.hourly-block')) return;
     li.classList.toggle('expanded');
+    if (li.classList.contains('expanded') && li._updateHrArrows) {
+      requestAnimationFrame(li._updateHrArrows);
+    }
   });
 
   li.querySelectorAll('.report-btn').forEach(btn => {
@@ -292,6 +366,8 @@ function renderBeach(beach, rank) {
       submitReport(beach.id, level, btn);
     });
   });
+
+  wireHourlyStrip(li);
 
   return li;
 }
