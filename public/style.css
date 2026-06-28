@@ -870,17 +870,17 @@ footer {
 .hourly-wrap {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 .hr-nav {
   flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 1.5px solid var(--sand-warm);
   background: var(--foam);
   color: var(--deep);
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 800;
   line-height: 1;
   cursor: pointer;
@@ -896,6 +896,7 @@ footer {
 
 .hourly-scroll {
   flex: 1;
+  min-width: 0;
   display: flex;
   gap: 4px;
   overflow-x: auto;
@@ -961,7 +962,18 @@ footer {
 .tm-label { font-weight: 700; color: var(--deep); }
 .tm-detail { color: var(--muted); font-size: 0.8rem; flex: 1; }
 
+/* Mobile: keep the arrows (reliable taps), drop snap (was jittery), bigger cells */
 @media (max-width: 480px) {
-  .hr-nav { display: none; }      /* touch scroll handles it on mobile */
-  .hr-cell { min-width: 54px; }   /* bigger tap targets */
+  .hr-nav {
+    width: 40px;
+    height: 40px;
+    font-size: 1.4rem;
+  }
+  .hourly-scroll {
+    scroll-snap-type: none;
+  }
+  .hr-cell {
+    min-width: 58px;
+    padding: 8px 6px;
+  }
 }
