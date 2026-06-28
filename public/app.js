@@ -108,13 +108,13 @@ function oceanTempSnippet(ot) {
   return `
     <div class="ocean-temp-summary">
       <span class="ot-icon">🌡️</span>
+      <span class="ot-heading">Ocean temp</span>
       <span class="ot-temp">${ot.tempF}°</span>
       <span class="ot-label">${labelText}</span>
       <span class="ot-detail">${detailText}${ot.stationName ? ` · ${ot.stationName} buoy` : ''}</span>
     </div>
   `;
 }
-
 // Next-12-hours forecast strip
 function hourlyStrip(hours) {
   if (!hours || !hours.length) return '';

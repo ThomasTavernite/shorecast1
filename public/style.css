@@ -908,3 +908,13 @@ footer {
 .tm-icon { font-size: 1.3rem; }
 .tm-label { font-weight: 700; color: var(--deep); }
 .tm-detail { color: var(--muted); font-size: 0.8rem; flex: 1; }
+.ot-heading {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 800;
+  color: var(--deep);
+  background: rgba(255, 255, 255, 0.65);
+  padding: 3px 8px;
+  border-radius: 100px;
+}

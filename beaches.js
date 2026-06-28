@@ -1,7 +1,7 @@
-// 30 NJ Shore beaches, north to south
+// 35 NJ Shore beaches, north to south
 // Badge prices verified against Patch 2026 Jersey Shore Beach Badge Guide (Apr 2026)
 // Coordinates are approximate centers; weather/tide APIs snap to nearest grid anyway
-// Last verified: May 2026
+// Last verified: May 2026  |  Longport + Stone Harbor + Wildwoods added: Jun 2026
 
 const BEACHES = [
   { id: 'sandy-hook',       name: 'Sandy Hook',                town: 'Highlands',       county: 'Monmouth', lat: 40.4262, lon: -73.9882, badgePrice: 0,  parkingNotes: 'Free badge (NPS), parking $20/day weekday & weekend, $100/season',                    vibe: 'wild' },
@@ -30,9 +30,14 @@ const BEACHES = [
   { id: 'beach-haven',      name: 'Beach Haven',               town: 'Beach Haven',     county: 'Ocean',    lat: 39.5612, lon: -74.2418, badgePrice: 10, parkingNotes: 'Metered street parking, season $40 (early) / $50',                              vibe: 'family' },
   { id: 'atlantic-city',    name: 'Atlantic City Beach',       town: 'Atlantic City',   county: 'Atlantic', lat: 39.3548, lon: -74.4324, badgePrice: 0,  parkingNotes: 'Free beach access, casino garages vary $10-30/day',                            vibe: 'lively' },
   { id: 'ventnor',          name: 'Ventnor Beach',             town: 'Ventnor City',    county: 'Atlantic', lat: 39.3401, lon: -74.4724, badgePrice: 10, parkingNotes: 'Free street parking, season $10 (early) / $20',                                 vibe: 'classic' },
+  { id: 'longport',         name: 'Longport Beach',            town: 'Longport',        county: 'Atlantic', lat: 39.3076, lon: -74.5388, badgePrice: 10, parkingNotes: 'Free street parking, southern tip of Absecon Island, season badge ~$15',          vibe: 'quiet' },
   { id: 'ocean-city',       name: 'Ocean City Beach',          town: 'Ocean City',      county: 'Cape May', lat: 39.2776, lon: -74.5746, badgePrice: 10, parkingNotes: 'Metered street parking, season tag $30 (early) / $35',                          vibe: 'family' },
   { id: 'sea-isle-city',    name: 'Sea Isle City Beach',       town: 'Sea Isle City',   county: 'Cape May', lat: 39.1537, lon: -74.6921, badgePrice: 10, parkingNotes: 'Free street parking, Wednesdays free beach days',                               vibe: 'family' },
   { id: 'avalon',           name: 'Avalon Beach',              town: 'Avalon',          county: 'Cape May', lat: 39.1018, lon: -74.7187, badgePrice: 10, parkingNotes: 'Free street parking, reciprocal w/ Stone Harbor, season $37-42',                vibe: 'classic' },
+  { id: 'stone-harbor',     name: 'Stone Harbor Beach',        town: 'Stone Harbor',    county: 'Cape May', lat: 39.0479, lon: -74.7635, badgePrice: 10, parkingNotes: 'Free street parking, reciprocal w/ Avalon, season $37-42',                       vibe: 'family' },
+  { id: 'north-wildwood',   name: 'North Wildwood Beach',      town: 'North Wildwood',  county: 'Cape May', lat: 39.0007, lon: -74.7910, badgePrice: 0,  parkingNotes: 'FREE beach (no badges), metered/free street parking, very wide beach',          vibe: 'family' },
+  { id: 'wildwood',         name: 'Wildwood Beach',            town: 'Wildwood',        county: 'Cape May', lat: 38.9918, lon: -74.8149, badgePrice: 0,  parkingNotes: 'FREE beach (no badges), boardwalk lots & metered street, huge beach',           vibe: 'lively' },
+  { id: 'wildwood-crest',   name: 'Wildwood Crest Beach',      town: 'Wildwood Crest',  county: 'Cape May', lat: 38.9740, lon: -74.8332, badgePrice: 0,  parkingNotes: 'FREE beach (no badges), free street parking, wide & quieter than Wildwood',     vibe: 'family' },
   { id: 'cape-may',         name: 'Cape May Beach',            town: 'Cape May',        county: 'Cape May', lat: 38.9351, lon: -74.9060, badgePrice: 10, parkingNotes: 'Metered street parking fills fast, season $30-40, cash/check only',             vibe: 'classic' }
 ];
 
