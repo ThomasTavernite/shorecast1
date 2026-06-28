@@ -100,6 +100,66 @@ function tideSnippet(td) {
   return `<span class="td-icon">🌊</span><span class="td-label">${arrow} ${labelText} ${timeStr}</span><span class="td-detail">${next.heightFt} ft · ${inHrs}</span>`;
 }
 
+// Ocean water temperature (display-only)
+function oceanTempSnippet(ot) {
+  if (!ot || ot.tempF == null) return '';
+  const labelText = ot.label ? ot.label.label : '';
+  const detailText = ot.label ? ot.label.detail : '';
+  return `
+    <div class="ocean-temp-summary">
+      <span class="ot-icon">🌡️</span>
+      <span class="ot-temp">${ot.tempF}°</span>
+      <span class="ot-label">${labelText}</span>
+      <span class="ot-detail">${detailText}${ot.stationName ? ` · ${ot.stationName} buoy` : ''}</span>
+    </div>
+  `;
+}
+
+// Next-12-hours forecast strip
+function hourlyStrip(hours) {
+  if (!hours || !hours.length) return '';
+  const cells = hours.map(h => {
+    const wl = weatherLabel(h.weatherCode);
+    const t = new Date(h.time);
+    const hr = t.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }).replace(':00', '');
+    const precip = (h.precipProb != null && h.precipProb >= 20)
+      ? `<span class="hr-precip">${h.precipProb}%</span>`
+      : `<span class="hr-precip hr-dry">&nbsp;</span>`;
+    return `
+      <div class="hr-cell">
+        <span class="hr-time">${hr}</span>
+        <span class="hr-icon">${wl.icon}</span>
+        <span class="hr-temp">${h.tempF != null ? h.tempF + '°' : '—'}</span>
+        ${precip}
+      </div>
+    `;
+  }).join('');
+  return `
+    <div class="hourly-block">
+      <div class="forecast-heading">Next 12 hours</div>
+      <div class="hourly-scroll">${cells}</div>
+    </div>
+  `;
+}
+
+// Tomorrow's forecast summary
+function tomorrowSnippet(tm) {
+  if (!tm) return '';
+  const wl = weatherLabel(tm.weatherCode);
+  const hi = tm.highF != null ? `${tm.highF}°` : '—';
+  const lo = tm.lowF != null ? `${tm.lowF}°` : '—';
+  const rain = (tm.precipProb != null && tm.precipProb >= 20) ? ` · ${tm.precipProb}% rain` : '';
+  return `
+    <div class="tomorrow-summary">
+      <span class="tm-icon">${wl.icon}</span>
+      <span class="tm-label">Tomorrow: ${wl.label}</span>
+      <span class="tm-detail">${hi} / ${lo}${rain}</span>
+    </div>
+  `;
+}
+
+function submitReportFactory() {} // (placeholder removed — submitReport defined below)
+
 async function submitReport(beachId, level, btnEl) {
   btnEl.disabled = true;
   btnEl.textContent = 'Sending…';
@@ -134,6 +194,7 @@ function renderBeach(beach, rank) {
   const wd = beach.waterDetails;
   const cd = beach.crowdDetails;
   const td = beach.tideDetails;
+  const ot = beach.oceanTempDetails;
   const wl = w ? weatherLabel(w.weatherCode) : null;
   const sl = surfLabel(m);
   const medal = rankMedal(rank);
@@ -153,6 +214,9 @@ function renderBeach(beach, rank) {
     : '';
 
   const tideSummary = tideSnippet(td);
+  const oceanTemp = oceanTempSnippet(ot);
+  const hourly = hourlyStrip(beach.hourly);
+  const tomorrow = tomorrowSnippet(beach.tomorrow);
 
   const crowdSummary = cd && cd.label
     ? `<span class="cr-icon">${cd.label.icon}</span><span class="cr-label">${cd.label.label}</span><span class="cr-detail">${cd.label.detail}</span><span class="cr-source">${cd.source}</span>`
@@ -178,6 +242,9 @@ function renderBeach(beach, rank) {
       </div>
       ${waterSummary ? `<div class="water-summary">${waterSummary}</div>` : ''}
       ${tideSummary ? `<div class="tide-summary">${tideSummary}</div>` : ''}
+      ${oceanTemp}
+      ${hourly}
+      ${tomorrow}
       ${crowdSummary ? `<div class="crowd-summary">${crowdSummary}</div>` : ''}
       ${beach.parkingDetails ? `
         <div class="parking-summary">

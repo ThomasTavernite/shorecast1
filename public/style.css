@@ -819,3 +819,92 @@ footer {
     font-size: 1rem;
   }
 }
+/* ===== OCEAN TEMP + FORECASTS ===== */
+
+.ocean-temp-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 11px 16px;
+  border-radius: 14px;
+  margin-bottom: 10px;
+  font-size: 0.92rem;
+  background: linear-gradient(135deg, #d4ecf3 0%, #aacfe0 100%);
+}
+.ot-icon { font-size: 1.3rem; }
+.ot-temp {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--deep);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.ot-label { font-weight: 700; color: var(--deep); }
+.ot-detail { color: var(--muted); font-size: 0.8rem; flex: 1; }
+
+.hourly-block {
+  background: linear-gradient(135deg, #e8f3f8 0%, #d4e8f0 100%);
+  border-radius: 14px;
+  padding: 12px 10px 10px;
+  margin-bottom: 10px;
+}
+.forecast-heading {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  color: var(--deep);
+  padding: 0 6px 8px;
+}
+.hourly-scroll {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+.hourly-scroll::-webkit-scrollbar { height: 5px; }
+.hourly-scroll::-webkit-scrollbar-thumb {
+  background: var(--sand-warm);
+  border-radius: 100px;
+}
+.hr-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 46px;
+  padding: 6px 4px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.5);
+}
+.hr-time { font-size: 0.68rem; color: var(--muted); font-weight: 700; }
+.hr-icon { font-size: 1.1rem; line-height: 1; }
+.hr-temp {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--deep);
+  font-variant-numeric: tabular-nums;
+}
+.hr-precip {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--ocean);
+}
+.hr-precip.hr-dry { opacity: 0; }
+
+.tomorrow-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 11px 16px;
+  border-radius: 14px;
+  margin-bottom: 10px;
+  font-size: 0.92rem;
+  background: linear-gradient(135deg, #e4eef3 0%, #cdddE8 100%);
+}
+.tm-icon { font-size: 1.3rem; }
+.tm-label { font-weight: 700; color: var(--deep); }
+.tm-detail { color: var(--muted); font-size: 0.8rem; flex: 1; }

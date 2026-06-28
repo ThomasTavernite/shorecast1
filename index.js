@@ -10,6 +10,7 @@ const { addReport, getReportedCrowd, getAllStats } = require('./reports');
 const { getWebcam } = require('./webcams');
 const { estimateAllParking } = require('./parking');
 const { fetchAllTides } = require('./tides');
+const { fetchAllOceanTemps } = require('./oceantemp');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -47,12 +48,13 @@ function labelFromLevel(level) {
 }
 
 async function computeShoreScores() {
-  const [weatherMap, marineMap, waterMap, googleMap, tideMap] = await Promise.all([
+  const [weatherMap, marineMap, waterMap, googleMap, tideMap, oceanTempMap] = await Promise.all([
     fetchAllWeather(),
     fetchAllMarine(),
     fetchAllWater(),
     USE_GOOGLE_CROWDS ? fetchAllGoogleCrowds().catch(() => ({})) : Promise.resolve({}),
-    fetchAllTides().catch(() => ({}))
+    fetchAllTides().catch(() => ({})),
+    fetchAllOceanTemps().catch(() => ({}))
   ]);
 
   const heuristicMap = estimateAllCrowds(weatherMap);
@@ -83,9 +85,12 @@ async function computeShoreScores() {
     const cResolved = resolvedCrowds[beach.id];
     const pData = parkingMap[beach.id];
     const tData = tideMap[beach.id];
+    const otData = oceanTempMap[beach.id];
 
     const weather = wData?.weatherScore ?? 50;
     const weatherDetails = wData?.weather ?? null;
+    const hourly = wData?.hourly ?? null;
+    const tomorrow = wData?.tomorrow ?? null;
 
     const surf = mData?.surfScore ?? 50;
     const marineDetails = mData?.marine ?? null;
@@ -100,6 +105,7 @@ async function computeShoreScores() {
     const parkingDetails = pData ? { score: parking, label: pData.parkingLabel } : null;
 
     const tideDetails = tData || null;
+    const oceanTempDetails = otData || null;
 
     const shoreScore = Math.round(
       water * 0.30 +
@@ -114,11 +120,14 @@ async function computeShoreScores() {
       shoreScore,
       factors: { water, surf, weather, crowd, parking },
       weatherDetails,
+      hourly,
+      tomorrow,
       marineDetails,
       waterDetails,
       crowdDetails,
       parkingDetails,
       tideDetails,
+      oceanTempDetails,
       webcamUrl: getWebcam(beach.id)
     };
   }).sort((a, b) => b.shoreScore - a.shoreScore);

@@ -1,6 +1,7 @@
 // Open-Meteo weather scraper
 // Free, no API key. Tries HRRR (high-res US model) first, falls back to default.
 // Includes timeout + retry to handle transient rate-limiting on burst requests.
+// Now also returns a 12-hour hourly strip + tomorrow's daily summary (display-only).
 
 const BEACHES = require('./beaches');
 
@@ -19,11 +20,49 @@ async function safeFetch(url, timeoutMs = 8000) {
   }
 }
 
+// Build the next-12-hours strip from Open-Meteo hourly arrays.
+function buildHourlyStrip(hourly) {
+  if (!hourly || !hourly.time) return null;
+  const now = Date.now();
+  const out = [];
+  for (let i = 0; i < hourly.time.length; i++) {
+    const t = new Date(hourly.time[i]).getTime();
+    if (t < now - 30 * 60 * 1000) continue; // skip hours already well past
+    out.push({
+      time: hourly.time[i],
+      tempF: hourly.temperature_2m?.[i] != null ? Math.round(hourly.temperature_2m[i]) : null,
+      precipProb: hourly.precipitation_probability?.[i] ?? null,
+      weatherCode: hourly.weather_code?.[i] ?? null,
+      windMph: hourly.wind_speed_10m?.[i] != null ? Math.round(hourly.wind_speed_10m[i]) : null
+    });
+    if (out.length >= 12) break;
+  }
+  return out.length ? out : null;
+}
+
+// Pull tomorrow's summary from Open-Meteo daily arrays (index 1 = tomorrow).
+function buildTomorrow(daily) {
+  if (!daily || !daily.time || daily.time.length < 2) return null;
+  const i = 1;
+  return {
+    date: daily.time[i],
+    highF: daily.temperature_2m_max?.[i] != null ? Math.round(daily.temperature_2m_max[i]) : null,
+    lowF: daily.temperature_2m_min?.[i] != null ? Math.round(daily.temperature_2m_min[i]) : null,
+    weatherCode: daily.weather_code?.[i] ?? null,
+    precipProb: daily.precipitation_probability_max?.[i] ?? null,
+    sunrise: daily.sunrise?.[i] ?? null,
+    sunset: daily.sunset?.[i] ?? null
+  };
+}
+
 async function fetchOnce(beach, model) {
   const modelParam = model ? `&models=${model}` : '';
   const url = `https://api.open-meteo.com/v1/forecast` +
     `?latitude=${beach.lat}&longitude=${beach.lon}` +
     `&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,uv_index,cloud_cover` +
+    `&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m` +
+    `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,sunrise,sunset` +
+    `&forecast_days=2` +
     `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch` +
     `&timezone=America/New_York` +
     modelParam;
@@ -35,14 +74,18 @@ async function fetchOnce(beach, model) {
   if (!c || c.temperature_2m == null) return null;
 
   return {
-    tempF: Math.round(c.temperature_2m),
-    feelsLikeF: Math.round(c.apparent_temperature),
-    precipIn: c.precipitation || 0,
-    windMph: Math.round(c.wind_speed_10m),
-    gustsMph: Math.round(c.wind_gusts_10m),
-    uvIndex: c.uv_index,
-    cloudPct: c.cloud_cover,
-    weatherCode: c.weather_code
+    current: {
+      tempF: Math.round(c.temperature_2m),
+      feelsLikeF: Math.round(c.apparent_temperature),
+      precipIn: c.precipitation || 0,
+      windMph: Math.round(c.wind_speed_10m),
+      gustsMph: Math.round(c.wind_gusts_10m),
+      uvIndex: c.uv_index,
+      cloudPct: c.cloud_cover,
+      weatherCode: c.weather_code
+    },
+    hourly: buildHourlyStrip(data.hourly),
+    tomorrow: buildTomorrow(data.daily)
   };
 }
 
@@ -52,12 +95,26 @@ function sleep(ms) {
 }
 
 async function fetchWeatherForBeach(beach) {
-  // Try up to 3 times total, with HRRR first then best_match fallback each round
+  // Try up to 3 times total, with HRRR first then best_match fallback each round.
+  // Note: HRRR is current-conditions focused; if its hourly/daily come back thin,
+  // the best_match fallback fills the forecast blocks.
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       // Try HRRR first (1km resolution, NOAA US)
       const hrrr = await fetchOnce(beach, 'gfs_hrrr');
-      if (hrrr) return hrrr;
+      if (hrrr && hrrr.current) {
+        // HRRR is short-range; if it didn't return forecast blocks, backfill them.
+        if (!hrrr.hourly || !hrrr.tomorrow) {
+          try {
+            const best = await fetchOnce(beach, null);
+            if (best) {
+              hrrr.hourly = hrrr.hourly || best.hourly;
+              hrrr.tomorrow = hrrr.tomorrow || best.tomorrow;
+            }
+          } catch (_) { /* keep what we have */ }
+        }
+        return hrrr;
+      }
       // Fallback: best_match (Open-Meteo auto-picks model)
       const best = await fetchOnce(beach, null);
       if (best) return best;
@@ -104,11 +161,13 @@ async function fetchAllWeather() {
     const batch = BEACHES.slice(i, i + BATCH_SIZE);
     const results = await Promise.all(
       batch.map(async beach => {
-        const weather = await fetchWeatherForBeach(beach);
+        const data = await fetchWeatherForBeach(beach);
         return {
           id: beach.id,
-          weather,
-          weatherScore: scoreWeather(weather)
+          weather: data ? data.current : null,
+          hourly: data ? data.hourly : null,
+          tomorrow: data ? data.tomorrow : null,
+          weatherScore: scoreWeather(data ? data.current : null)
         };
       })
     );
