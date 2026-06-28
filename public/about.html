@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#FF8C5A">
 
   <title>About Shorely — How the ShoreScore works</title>
-  <meta name="description" content="How Shorely ranks Jersey Shore beaches in real time. Data sources, methodology, and the factors that go into every ShoreScore.">
+  <meta name="description" content="How Shorely ranks all 35 Jersey Shore beaches in real time. Data sources, methodology, and the factors that go into every ShoreScore.">
 
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="manifest" href="/manifest.json">
@@ -14,7 +14,7 @@
 
   <meta property="og:type" content="article">
   <meta property="og:title" content="About Shorely — How the ShoreScore works">
-  <meta property="og:description" content="How Shorely ranks Jersey Shore beaches in real time. Data sources and methodology explained.">
+  <meta property="og:description" content="How Shorely ranks all 35 Jersey Shore beaches in real time. Data sources and methodology explained.">
   <meta property="og:url" content="https://shorely.xyz/about">
   <meta property="og:image" content="https://shorely.xyz/og-image.png">
   <meta property="og:image:width" content="1200">
@@ -25,7 +25,7 @@
   <meta name="twitter:site" content="@shorelyapp">
   <meta name="twitter:creator" content="@shorelyapp">
   <meta name="twitter:title" content="About Shorely — How the ShoreScore works">
-  <meta name="twitter:description" content="How Shorely ranks Jersey Shore beaches in real time.">
+  <meta name="twitter:description" content="How Shorely ranks all 35 Jersey Shore beaches in real time.">
   <meta name="twitter:image" content="https://shorely.xyz/og-image.png">
 
   <link rel="stylesheet" href="style.css">
@@ -41,7 +41,7 @@
 
     <h2>How Shorely works</h2>
     <p class="lede">
-      Shorely ranks all 30 Jersey Shore beaches from Sandy Hook to Cape May
+      Shorely ranks all 35 Jersey Shore beaches from Sandy Hook to Cape May
       based on real-time conditions. Every beach gets a <strong>ShoreScore</strong>
       from 0 to 100. Higher is better.
     </p>
@@ -62,13 +62,21 @@
       <li><strong>Parking — 15%</strong>. A heuristic based on each beach's parking capacity (residential streets vs. casino garages = wildly different baselines), the current crowd estimate, and time of day.</li>
     </ul>
 
+    <p>
+      <strong>Ocean temperature</strong> and the <strong>hourly &amp; next-day forecasts</strong>
+      are shown on every beach for planning, but they are <em>not</em> part of the
+      ShoreScore — they're there to inform your call, not to move the ranking.
+    </p>
+
     <h3>Where the data comes from</h3>
     <p>Every factor is real data from public, free sources. No black boxes.</p>
 
     <ul class="source-list">
-      <li><strong>Weather</strong> — <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>, using NOAA's HRRR model (the same high-resolution model the National Weather Service publishes for North America). Refreshed every 10 minutes.</li>
+      <li><strong>Weather</strong> — <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>, sourced from NOAA model data (the same forecasting the National Weather Service publishes for North America). Refreshed every 10 minutes.</li>
+      <li><strong>Hourly &amp; next-day forecast</strong> — Also from Open-Meteo: a 12-hour outlook and tomorrow's high/low and conditions on every beach.</li>
       <li><strong>Surf &amp; swell</strong> — Open-Meteo Marine API, sourced from the German Weather Service ICON Wave model.</li>
       <li><strong>Tides</strong> — <a href="https://tidesandcurrents.noaa.gov" target="_blank" rel="noopener">NOAA Tides &amp; Currents</a>. I use the three primary NJ stations (Sandy Hook, Atlantic City, Cape May) and snap each beach to its closest one.</li>
+      <li><strong>Ocean temperature</strong> — Live water temperature from <a href="https://tidesandcurrents.noaa.gov" target="_blank" rel="noopener">NOAA</a> buoys/stations, using the same three NJ stations as tides with each beach mapped to its nearest one.</li>
       <li><strong>Water quality</strong> — Estimated from rainfall data via Open-Meteo. NJDEP's official beach monitoring runs mid-May through mid-September, Mon–Fri only. I use rainfall as a year-round proxy because that's NJDEP's own primary indicator for closures. I'll integrate live NJDEP data when it's in season.</li>
       <li><strong>Crowd</strong> — Three sources, in order of priority: (1) user reports submitted directly through Shorely, (2) Google's Popular Times "Live" data when available, (3) a heuristic based on beach popularity, day of week, time of day, weather, and holidays.</li>
       <li><strong>Webcams</strong> — Linked from <a href="https://njbeachcams.com" target="_blank" rel="noopener">NJBeachCams</a>, the public-facing service from Coastal Camera Network.</li>
@@ -86,7 +94,7 @@
 
     <p>
       <strong>About the weather data:</strong> Shorely pulls weather forecasts
-      from NOAA's HRRR model via Open-Meteo. Different weather services
+      from NOAA model data via Open-Meteo. Different weather services
       (Apple, Google, AccuWeather, Weather.com) blend multiple models and may
       show readings 2–5°F different from Shorely at any given moment. This is
       normal model variance, not a bug — there is no single "true" temperature
@@ -147,6 +155,7 @@
       <a href="https://instagram.com/shorelyapp" target="_blank" rel="noopener" aria-label="Instagram">Instagram</a>
       <a href="https://tiktok.com/@shorelyapp" target="_blank" rel="noopener" aria-label="TikTok">TikTok</a>
       <a href="https://x.com/ShorelyApp" target="_blank" rel="noopener" aria-label="X">X</a>
+      <a href="https://www.facebook.com/profile.php?id=61589770941780" target="_blank" rel="noopener" aria-label="Facebook">Facebook</a>
     </div>
     <p class="footer-credits">
       Contact: <a href="mailto:thomas@shorely.xyz">thomas@shorely.xyz</a> ·
