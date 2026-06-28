@@ -1,7 +1,7 @@
 // Open-Meteo weather scraper
-// Free, no API key. Tries HRRR (high-res US model) first, falls back to default.
+// Free, no API key. Single best_match call per beach: current + 12h hourly + 2-day daily.
+// (Reverted from HRRR-first + backfill, which doubled calls and timed out on Vercel.)
 // Includes timeout + retry to handle transient rate-limiting on burst requests.
-// Now also returns a 12-hour hourly strip + tomorrow's daily summary (display-only).
 
 const BEACHES = require('./beaches');
 
@@ -55,8 +55,8 @@ function buildTomorrow(daily) {
   };
 }
 
-async function fetchOnce(beach, model) {
-  const modelParam = model ? `&models=${model}` : '';
+// One request per beach: current conditions + hourly + daily, all together.
+async function fetchOnce(beach) {
   const url = `https://api.open-meteo.com/v1/forecast` +
     `?latitude=${beach.lat}&longitude=${beach.lon}` +
     `&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,uv_index,cloud_cover` +
@@ -64,13 +64,10 @@ async function fetchOnce(beach, model) {
     `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,sunrise,sunset` +
     `&forecast_days=2` +
     `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch` +
-    `&timezone=America/New_York` +
-    modelParam;
+    `&timezone=America/New_York`;
 
   const data = await safeFetch(url);
   const c = data.current;
-
-  // HRRR sometimes returns nulls for coastal grid cells
   if (!c || c.temperature_2m == null) return null;
 
   return {
@@ -95,31 +92,13 @@ function sleep(ms) {
 }
 
 async function fetchWeatherForBeach(beach) {
-  // Try up to 3 times total, with HRRR first then best_match fallback each round.
-  // Note: HRRR is current-conditions focused; if its hourly/daily come back thin,
-  // the best_match fallback fills the forecast blocks.
+  // Up to 3 attempts, single call each — handles transient rate limits / timeouts.
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      // Try HRRR first (1km resolution, NOAA US)
-      const hrrr = await fetchOnce(beach, 'gfs_hrrr');
-      if (hrrr && hrrr.current) {
-        // HRRR is short-range; if it didn't return forecast blocks, backfill them.
-        if (!hrrr.hourly || !hrrr.tomorrow) {
-          try {
-            const best = await fetchOnce(beach, null);
-            if (best) {
-              hrrr.hourly = hrrr.hourly || best.hourly;
-              hrrr.tomorrow = hrrr.tomorrow || best.tomorrow;
-            }
-          } catch (_) { /* keep what we have */ }
-        }
-        return hrrr;
-      }
-      // Fallback: best_match (Open-Meteo auto-picks model)
-      const best = await fetchOnce(beach, null);
-      if (best) return best;
+      const data = await fetchOnce(beach);
+      if (data) return data;
+      return null;
     } catch (err) {
-      // Transient failure (rate limit / timeout) — wait and retry
       if (attempt < 3) {
         await sleep(attempt * 600); // 600ms, then 1200ms
         continue;
@@ -173,7 +152,6 @@ async function fetchAllWeather() {
     );
     results.forEach(r => { map[r.id] = r; });
 
-    // Brief pause between batches so we don't hammer the API all at once
     if (i + BATCH_SIZE < BEACHES.length) {
       await sleep(300);
     }
