@@ -157,6 +157,10 @@ async function ensureCache() {
 
 app.get('/api/beaches', async (req, res) => {
   await ensureCache();
+  // Edge-cache the result: serve instantly from Vercel's CDN for 10 min,
+  // and serve stale instantly while revalidating in the background after that.
+  // This means users never wait on the recompute.
+  res.set('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=86400');
   res.json({ lastUpdated, count: beachCache.length, beaches: beachCache });
 });
 

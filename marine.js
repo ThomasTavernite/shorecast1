@@ -1,39 +1,40 @@
 // Open-Meteo Marine API — wave height, period, direction
-// Free, no API key. Docs: https://open-meteo.com/en/docs/marine-weather-api
+// Free, no API key. ONE multi-location call for all beaches (returns an array, in order).
+// Docs: https://open-meteo.com/en/docs/marine-weather-api
 
 const BEACHES = require('./beaches');
 
-async function fetchMarineForBeach(beach) {
-  const url = `https://marine-api.open-meteo.com/v1/marine` +
-    `?latitude=${beach.lat}&longitude=${beach.lon}` +
-    `&current=wave_height,wave_direction,wave_period,wind_wave_height,swell_wave_height,swell_wave_period` +
-    `&length_unit=imperial` +
-    `&timezone=America/New_York`;
-
+async function safeFetch(url, timeoutMs = 15000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const c = data.current;
-
-    return {
-      waveHeightFt: c.wave_height != null ? +c.wave_height.toFixed(1) : null,
-      wavePeriodSec: c.wave_period != null ? +c.wave_period.toFixed(1) : null,
-      waveDirectionDeg: c.wave_direction,
-      windWaveHeightFt: c.wind_wave_height != null ? +c.wind_wave_height.toFixed(1) : null,
-      swellHeightFt: c.swell_wave_height != null ? +c.swell_wave_height.toFixed(1) : null,
-      swellPeriodSec: c.swell_wave_period != null ? +c.swell_wave_period.toFixed(1) : null
-    };
+    return await res.json();
   } catch (err) {
-    console.error(`Marine fetch failed for ${beach.id}:`, err.message);
-    return null;
+    clearTimeout(timer);
+    throw err;
   }
 }
 
-// Score surf 0-100. "Good surf" depends on the user.
-// Heuristic: 2-5 ft waves with 8+ sec period = ideal swimming + light surfing
-// Bigger waves = dangerous for swimming, better for surfers
-// Flat (<1 ft) = boring but safe
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function parseMarine(c) {
+  if (!c) return null;
+  return {
+    waveHeightFt: c.wave_height != null ? +c.wave_height.toFixed(1) : null,
+    wavePeriodSec: c.wave_period != null ? +c.wave_period.toFixed(1) : null,
+    waveDirectionDeg: c.wave_direction,
+    windWaveHeightFt: c.wind_wave_height != null ? +c.wind_wave_height.toFixed(1) : null,
+    swellHeightFt: c.swell_wave_height != null ? +c.swell_wave_height.toFixed(1) : null,
+    swellPeriodSec: c.swell_wave_period != null ? +c.swell_wave_period.toFixed(1) : null
+  };
+}
+
+// Score surf 0-100. Sweet spot 2-4 ft with longer period.
 function scoreSurf(m) {
   if (!m || m.waveHeightFt == null) return 50;
 
@@ -42,44 +43,61 @@ function scoreSurf(m) {
 
   let score = 70;
 
-  // Wave height — sweet spot 2-4 ft for general beachgoing
-  if (h < 0.5) score -= 20;            // dead flat, no fun
-  else if (h < 1) score -= 5;          // tiny
-  else if (h <= 2) score += 10;        // playful
-  else if (h <= 4) score += 15;        // ideal
-  else if (h <= 6) score -= 5;         // big, surfer-friendly but rough
-  else if (h <= 8) score -= 25;        // dangerous for swimming
-  else score -= 50;                    // hazardous
+  if (h < 0.5) score -= 20;
+  else if (h < 1) score -= 5;
+  else if (h <= 2) score += 10;
+  else if (h <= 4) score += 15;
+  else if (h <= 6) score -= 5;
+  else if (h <= 8) score -= 25;
+  else score -= 50;
 
-  // Period — longer = more organized, cleaner
   if (p >= 10) score += 10;
   else if (p >= 8) score += 5;
-  else if (p < 5) score -= 10;         // choppy
+  else if (p < 5) score -= 10;
 
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
-// Compass bearing -> cardinal direction
 function bearingToCompass(deg) {
   if (deg == null) return '';
   const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
   return dirs[Math.round(deg / 22.5) % 16];
 }
 
+// One call for every beach. Returns map keyed by beach id.
 async function fetchAllMarine() {
-  const results = await Promise.all(
-    BEACHES.map(async beach => {
-      const marine = await fetchMarineForBeach(beach);
-      return {
-        id: beach.id,
-        marine: marine ? { ...marine, waveDirection: bearingToCompass(marine.waveDirectionDeg) } : null,
-        surfScore: scoreSurf(marine)
-      };
-    })
-  );
-
   const map = {};
-  results.forEach(r => { map[r.id] = r; });
+  const lats = BEACHES.map(b => b.lat).join(',');
+  const lons = BEACHES.map(b => b.lon).join(',');
+  const url = `https://marine-api.open-meteo.com/v1/marine` +
+    `?latitude=${lats}&longitude=${lons}` +
+    `&current=wave_height,wave_direction,wave_period,wind_wave_height,swell_wave_height,swell_wave_period` +
+    `&length_unit=imperial` +
+    `&timezone=America/New_York`;
+
+  let arr = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const data = await safeFetch(url);
+      arr = Array.isArray(data) ? data : [data];
+      break;
+    } catch (err) {
+      if (attempt < 3) { await sleep(attempt * 800); continue; }
+      console.error('Marine multi-fetch failed:', err.message);
+      arr = null;
+    }
+  }
+
+  BEACHES.forEach((beach, i) => {
+    const d = arr ? arr[i] : null;
+    const marine = d ? parseMarine(d.current) : null;
+    map[beach.id] = {
+      id: beach.id,
+      marine: marine ? { ...marine, waveDirection: bearingToCompass(marine.waveDirectionDeg) } : null,
+      surfScore: scoreSurf(marine)
+    };
+  });
+
   return map;
 }
 

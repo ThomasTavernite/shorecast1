@@ -1,12 +1,11 @@
 // Open-Meteo weather scraper
-// Free, no API key. Single best_match call per beach: current + 12h hourly + 2-day daily.
-// (Reverted from HRRR-first + backfill, which doubled calls and timed out on Vercel.)
-// Includes timeout + retry to handle transient rate-limiting on burst requests.
+// Free, no API key. ONE multi-location call for all beaches (current + 12h hourly + 2-day daily).
+// Open-Meteo returns an array (one entry per coordinate, in order) when given comma-separated coords.
+// This replaces ~35 separate requests with a single call — no burst rate-limiting.
 
 const BEACHES = require('./beaches');
 
-// Fetch with an abort timeout so hung requests fail fast instead of hanging
-async function safeFetch(url, timeoutMs = 8000) {
+async function safeFetch(url, timeoutMs = 15000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -20,14 +19,18 @@ async function safeFetch(url, timeoutMs = 8000) {
   }
 }
 
-// Build the next-12-hours strip from Open-Meteo hourly arrays.
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Build the next-12-hours strip from one location's hourly arrays.
 function buildHourlyStrip(hourly) {
   if (!hourly || !hourly.time) return null;
   const now = Date.now();
   const out = [];
   for (let i = 0; i < hourly.time.length; i++) {
     const t = new Date(hourly.time[i]).getTime();
-    if (t < now - 30 * 60 * 1000) continue; // skip hours already well past
+    if (t < now - 30 * 60 * 1000) continue;
     out.push({
       time: hourly.time[i],
       tempF: hourly.temperature_2m?.[i] != null ? Math.round(hourly.temperature_2m[i]) : null,
@@ -40,7 +43,7 @@ function buildHourlyStrip(hourly) {
   return out.length ? out : null;
 }
 
-// Pull tomorrow's summary from Open-Meteo daily arrays (index 1 = tomorrow).
+// Pull tomorrow's summary from one location's daily arrays (index 1 = tomorrow).
 function buildTomorrow(daily) {
   if (!daily || !daily.time || daily.time.length < 2) return null;
   const i = 1;
@@ -55,59 +58,18 @@ function buildTomorrow(daily) {
   };
 }
 
-// One request per beach: current conditions + hourly + daily, all together.
-async function fetchOnce(beach) {
-  const url = `https://api.open-meteo.com/v1/forecast` +
-    `?latitude=${beach.lat}&longitude=${beach.lon}` +
-    `&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,uv_index,cloud_cover` +
-    `&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m` +
-    `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,sunrise,sunset` +
-    `&forecast_days=2` +
-    `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch` +
-    `&timezone=America/New_York`;
-
-  const data = await safeFetch(url);
-  const c = data.current;
+function parseCurrent(c) {
   if (!c || c.temperature_2m == null) return null;
-
   return {
-    current: {
-      tempF: Math.round(c.temperature_2m),
-      feelsLikeF: Math.round(c.apparent_temperature),
-      precipIn: c.precipitation || 0,
-      windMph: Math.round(c.wind_speed_10m),
-      gustsMph: Math.round(c.wind_gusts_10m),
-      uvIndex: c.uv_index,
-      cloudPct: c.cloud_cover,
-      weatherCode: c.weather_code
-    },
-    hourly: buildHourlyStrip(data.hourly),
-    tomorrow: buildTomorrow(data.daily)
+    tempF: Math.round(c.temperature_2m),
+    feelsLikeF: Math.round(c.apparent_temperature),
+    precipIn: c.precipitation || 0,
+    windMph: Math.round(c.wind_speed_10m),
+    gustsMph: Math.round(c.wind_gusts_10m),
+    uvIndex: c.uv_index,
+    cloudPct: c.cloud_cover,
+    weatherCode: c.weather_code
   };
-}
-
-// Small helper to wait between retries
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function fetchWeatherForBeach(beach) {
-  // Up to 3 attempts, single call each — handles transient rate limits / timeouts.
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const data = await fetchOnce(beach);
-      if (data) return data;
-      return null;
-    } catch (err) {
-      if (attempt < 3) {
-        await sleep(attempt * 600); // 600ms, then 1200ms
-        continue;
-      }
-      console.error(`Weather fetch failed for ${beach.id} after ${attempt} attempts:`, err.message);
-      return null;
-    }
-  }
-  return null;
 }
 
 function scoreWeather(w) {
@@ -131,31 +93,44 @@ function scoreWeather(w) {
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
-// Fetch weather for all beaches in small batches to avoid burst rate-limiting
+// One call for every beach. Returns map keyed by beach id.
 async function fetchAllWeather() {
   const map = {};
-  const BATCH_SIZE = 6;
+  const lats = BEACHES.map(b => b.lat).join(',');
+  const lons = BEACHES.map(b => b.lon).join(',');
+  const url = `https://api.open-meteo.com/v1/forecast` +
+    `?latitude=${lats}&longitude=${lons}` +
+    `&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,uv_index,cloud_cover` +
+    `&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m` +
+    `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,sunrise,sunset` +
+    `&forecast_days=2` +
+    `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch` +
+    `&timezone=America/New_York`;
 
-  for (let i = 0; i < BEACHES.length; i += BATCH_SIZE) {
-    const batch = BEACHES.slice(i, i + BATCH_SIZE);
-    const results = await Promise.all(
-      batch.map(async beach => {
-        const data = await fetchWeatherForBeach(beach);
-        return {
-          id: beach.id,
-          weather: data ? data.current : null,
-          hourly: data ? data.hourly : null,
-          tomorrow: data ? data.tomorrow : null,
-          weatherScore: scoreWeather(data ? data.current : null)
-        };
-      })
-    );
-    results.forEach(r => { map[r.id] = r; });
-
-    if (i + BATCH_SIZE < BEACHES.length) {
-      await sleep(300);
+  let arr = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const data = await safeFetch(url);
+      arr = Array.isArray(data) ? data : [data];
+      break;
+    } catch (err) {
+      if (attempt < 3) { await sleep(attempt * 800); continue; }
+      console.error('Weather multi-fetch failed:', err.message);
+      arr = null;
     }
   }
+
+  BEACHES.forEach((beach, i) => {
+    const d = arr ? arr[i] : null;
+    const current = d ? parseCurrent(d.current) : null;
+    map[beach.id] = {
+      id: beach.id,
+      weather: current,
+      hourly: d ? buildHourlyStrip(d.hourly) : null,
+      tomorrow: d ? buildTomorrow(d.daily) : null,
+      weatherScore: scoreWeather(current)
+    };
+  });
 
   return map;
 }
