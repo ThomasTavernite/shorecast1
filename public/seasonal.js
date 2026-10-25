@@ -78,6 +78,20 @@
     ]
   };
 
+  // ===== Seasonal intro copy (replaces the summer paragraph under the cards) =====
+  // Summer is left untouched (the original copy in index.html stays).
+  const INTRO_COPY = {
+    fall: 'The crowds are gone, the badges are free, and the water\u2019s still mild. Every Shore town, ranked right now by a <strong>ShoreScore</strong> (0\u2013100) that blends weather, surf, water quality, tides, crowds, and parking. Tap any beach for the full breakdown.',
+    winter: 'Surf season, storm season, empty boardwalks. Live conditions for every Shore town all winter long \u2014 surf, water temp, wind, and tides. Tap any beach for the full breakdown.',
+    spring: 'The water\u2019s warming and the Shore\u2019s waking up. Every Shore town, ranked right now by <strong>ShoreScore</strong> as the countdown to swimmable begins. Tap any beach for the full breakdown.'
+  };
+  function swapIntro() {
+    const copy = INTRO_COPY[season];
+    if (!copy) return;
+    const p = document.querySelector('.intro p');
+    if (p) p.innerHTML = copy;
+  }
+
   // Today as 'YYYY-MM-DD' in local time (string compare works for ISO dates).
   function todayISO() {
     const d = new Date();
@@ -268,7 +282,30 @@
     insertAfterHeader(host);
   }
 
-  function init() { mountHero(); mountTodo(); loadHero(); }
+  // ===== Off-season badge line =====
+  // app.js renders "Badge: $X" inside each expanded card. Badges aren't required at
+  // the Shore outside summer, so off-season we rewrite that line as cards render.
+  // app.js itself is untouched.
+  const OFF_SEASON = season !== 'summer';
+  function fixBadgeLines(root) {
+    if (!OFF_SEASON) return;
+    (root || document).querySelectorAll('.meta > div').forEach(function (div) {
+      if (div.dataset.szn) return;
+      if (/^Badge:/.test(div.textContent.trim())) {
+        div.dataset.szn = '1';
+        div.textContent = 'Badge: Not required off-season \u2014 beaches are free until summer';
+      }
+    });
+  }
+  if (OFF_SEASON) {
+    new MutationObserver(function (muts) {
+      muts.forEach(function (m) {
+        m.addedNodes.forEach(function (n) { if (n.nodeType === 1) fixBadgeLines(n); });
+      });
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  }
+
+  function init() { swapIntro(); fixBadgeLines(); mountHero(); mountTodo(); loadHero(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();

@@ -111,8 +111,11 @@ function buildSeasonalHero(beaches, season) {
       value: bestDayLabel(top),
       badge: '\u2600',
       sub: join([
-        top.weatherDetails ? `${top.weatherDetails.tempF}\u00B0 at ${top.name}` : null,
-        'quieter beaches, cooler air'
+        top.name,
+        top.weatherDetails ? `${top.weatherDetails.tempF}\u00B0 air` : null,
+        top.oceanTempDetails?.tempF != null ? `${top.oceanTempDetails.tempF}\u00B0 water` : null,
+        top.weatherDetails?.windMph != null ? `${top.weatherDetails.windMph} mph wind` : null,
+        'no badges, no crowds'
       ]),
       beach: top.name, beachId: top.id
     };
