@@ -11,7 +11,7 @@ const { getWebcam } = require('./webcams');
 const { estimateAllParking } = require('./parking');
 const { fetchAllTides } = require('./tides');
 const { fetchAllOceanTemps } = require('./oceantemp');
-const { getSeason, SEASON_CONFIG, buildSeasonalHero } = require('./season'); // year-round pivot
+const { getSeason, SEASON_CONFIG, buildSeasonalHero, rankBeaches } = require('./season'); // year-round pivot
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -158,16 +158,17 @@ async function ensureCache() {
 
 app.get('/api/beaches', async (req, res) => {
   await ensureCache();
-  // Seasonal layer: pick the season and derive the homepage hero from the cache.
-  // Cheap, read-only — no extra fetches.
-  const season = getSeason();
+  // Seasonal layer: pick the season, rank the list for it, derive the hero.
+  // Cheap, read-only — no extra fetches. ?season=winter forces a season for preview.
+  const season = (req.query.season && SEASON_CONFIG[req.query.season]) ? req.query.season : getSeason();
   const seasonConfig = SEASON_CONFIG[season];
+  const ranked = rankBeaches(beachCache, season);   // winter = by surf, else ShoreScore order
   const seasonalHero = buildSeasonalHero(beachCache, season);
   // Edge-cache the result: serve instantly from Vercel's CDN for 10 min,
   // and serve stale instantly while revalidating in the background after that.
   // This means users never wait on the recompute.
   res.set('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=86400');
-  res.json({ lastUpdated, season, seasonConfig, seasonalHero, count: beachCache.length, beaches: beachCache });
+  res.json({ lastUpdated, season, rankBy: season === 'winter' ? 'surf' : 'shoreScore', seasonConfig, seasonalHero, count: ranked.length, beaches: ranked });
 });
 
 // Lightweight endpoint for just the seasonal layer (theme tokens + hero).

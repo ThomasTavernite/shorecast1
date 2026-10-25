@@ -65,6 +65,7 @@ function parseCurrent(c) {
     feelsLikeF: Math.round(c.apparent_temperature),
     precipIn: c.precipitation || 0,
     windMph: Math.round(c.wind_speed_10m),
+    windDeg: c.wind_direction_10m != null ? Math.round(c.wind_direction_10m) : null,
     gustsMph: Math.round(c.wind_gusts_10m),
     uvIndex: c.uv_index,
     cloudPct: c.cloud_cover,
@@ -100,7 +101,7 @@ async function fetchAllWeather() {
   const lons = BEACHES.map(b => b.lon).join(',');
   const url = `https://api.open-meteo.com/v1/forecast` +
     `?latitude=${lats}&longitude=${lons}` +
-    `&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,uv_index,cloud_cover` +
+    `&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,uv_index,cloud_cover` +
     `&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m` +
     `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,sunrise,sunset` +
     `&forecast_days=2` +

@@ -53,6 +53,77 @@ function wetsuitFor(tempF) {
   return '6/5 + boots, gloves & hood';
 }
 
+// ===== Winter SurfScore =====
+// The regular surfScore (marine.js) is tuned for beach-day pleasantness and penalizes
+// anything over ~4 ft. Winter surfers want the opposite. This scores for SURFING:
+//   - wave height: sweet spot 3-6 ft, fine 2-8, poor under 1.5 or over 10
+//   - period: long-period swell is clean, organized surf
+//   - wind: light or OFFSHORE (W/NW for the east-facing NJ coast) grooms waves;
+//           strong ONSHORE (E/NE/SE) wind chops them up
+// NJ beaches all face roughly east, so offshore is treated as 225-315 deg for every
+// town (a per-beach orientation table is the next refinement).
+function winterSurfScore(beach) {
+  const m = beach.marineDetails;
+  if (!m || m.waveHeightFt == null) return null;
+  const h = m.waveHeightFt;
+  const p = m.wavePeriodSec || 6;
+  const w = beach.weatherDetails || {};
+  const wind = w.windMph ?? 0;
+  const deg = w.windDeg;
+
+  let score = 40;
+  if (h >= 3 && h <= 6) score += 35;
+  else if (h >= 2 && h < 3) score += 22;
+  else if (h > 6 && h <= 8) score += 24;
+  else if (h >= 1.5 && h < 2) score += 10;
+  else if (h > 8 && h <= 10) score += 8;
+  else score -= 10;
+
+  if (p >= 12) score += 18;
+  else if (p >= 9) score += 12;
+  else if (p >= 7) score += 5;
+  else if (p < 5) score -= 8;
+
+  const offshore = deg != null && deg >= 225 && deg <= 315;
+  const onshore  = deg != null && (deg >= 45 && deg <= 135);
+  if (wind <= 6) score += 8;
+  else if (offshore) score += (wind <= 20 ? 10 : 2);
+  else if (onshore) score -= (wind >= 15 ? 18 : 8);
+  else score -= (wind >= 15 ? 8 : 2);
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function surfRating(score) {
+  if (score == null) return 'No data';
+  if (score >= 80) return 'Firing';
+  if (score >= 65) return 'Good';
+  if (score >= 50) return 'Fun';
+  if (score >= 35) return 'Small';
+  return 'Flat';
+}
+
+function windLabel(w) {
+  if (!w || w.windDeg == null) return null;
+  const d = w.windDeg;
+  const dir = ['N','NE','E','SE','S','SW','W','NW'][Math.round(d / 45) % 8];
+  const offshore = d >= 225 && d <= 315;
+  return `${w.windMph} mph ${dir}${offshore ? ' (offshore)' : ''}`;
+}
+
+// Season-aware ordering. Returns a NEW array; never mutates the cache.
+// Winter ranks by winterSurfScore and attaches surfScoreWinter + surfRating to each beach.
+function rankBeaches(beaches, season) {
+  if (!Array.isArray(beaches)) return [];
+  if (season !== 'winter') return beaches.slice();
+  return beaches
+    .map(b => {
+      const sc = winterSurfScore(b);
+      return { ...b, surfScoreWinter: sc, surfRating: surfRating(sc), windLabel: windLabel(b.weatherDetails) };
+    })
+    .sort((a, b) => (b.surfScoreWinter ?? -1) - (a.surfScoreWinter ?? -1));
+}
+
 function join(parts) {
   return parts.filter(Boolean).join(' · ');
 }
@@ -63,20 +134,18 @@ function buildSeasonalHero(beaches, season) {
   if (!Array.isArray(beaches) || beaches.length === 0) return null;
 
   if (season === 'winter') {
-    // Best surf right now, ranked by the existing surf factor.
-    const ranked = [...beaches]
-      .filter(b => b.marineDetails)
-      .sort((a, b) => (b.factors?.surf ?? 0) - (a.factors?.surf ?? 0));
+    const ranked = rankBeaches(beaches, 'winter').filter(b => b.surfScoreWinter != null);
     const top = ranked[0] || beaches[0];
     const m = top.marineDetails || {};
     const tempF = top.oceanTempDetails?.tempF ?? null;
     return {
       label: "Today's Best Surf",
-      value: m.waveHeightFt != null ? `${m.waveHeightFt} ft` : '—',
-      badge: '\uD83C\uDF0A',
+      value: m.waveHeightFt != null ? `${m.waveHeightFt} ft \u00B7 ${top.surfRating || ''}`.trim() : '\u2014',
+      badge: top.surfScoreWinter != null ? String(top.surfScoreWinter) : '\uD83C\uDF0A',
       sub: join([
-        m.waveDirection ? `${m.waveDirection} swell` : null,
+        top.name,
         m.wavePeriodSec != null ? `${m.wavePeriodSec}s period` : null,
+        top.windLabel,
         tempF != null ? `${tempF}\u00B0 water` : null,
         tempF != null ? wetsuitFor(tempF) : null
       ]),
@@ -144,4 +213,4 @@ function bestDayLabel(topBeach) {
   return todayWeatherScore >= 60 ? 'Today' : 'This weekend';
 }
 
-module.exports = { getSeason, SEASON_CONFIG, buildSeasonalHero, wetsuitFor };
+module.exports = { getSeason, SEASON_CONFIG, buildSeasonalHero, wetsuitFor, rankBeaches, winterSurfScore };

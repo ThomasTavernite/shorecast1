@@ -305,7 +305,75 @@
     }).observe(document.documentElement, { childList: true, subtree: true });
   }
 
-  function init() { swapIntro(); fixBadgeLines(); mountHero(); mountTodo(); loadHero(); }
+  // ===== Winter: show the surf score on each card instead of ShoreScore =====
+  // /api/beaches already comes back ranked by surf in winter (rankBy:'surf') with
+  // surfScoreWinter + surfRating on each beach. app.js still prints shoreScore, so
+  // we rewrite the big number on each card as it renders. app.js is untouched.
+  const WINTER = season === 'winter';
+  let surfById = null;
+  async function loadWinterScores() {
+    try {
+      const res = await fetch('/api/beaches' + (forced ? ('?season=' + encodeURIComponent(forced)) : ''));
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.rankBy !== 'surf') return;
+      surfById = {};
+      data.beaches.forEach(function (b) { surfById[b.id] = b; });
+      winterOrder = data.beaches.map(function (b) { return b.id; });
+      document.querySelectorAll('.beach-card').forEach(applyWinterScore);
+      reorderForWinter();
+    } catch (e) {}
+  }
+  // Put the rendered cards in surf order and re-assign medals/ranks to match.
+  // app.js renders in ShoreScore order (and may hit a cached response), so the
+  // numbers and the order can disagree without this.
+  let winterOrder = null, reorderT = null;
+  function reorderForWinter() {
+    if (!WINTER || !winterOrder) return;
+    const list = document.getElementById('beachList');
+    if (!list) return;
+    const cards = Array.prototype.slice.call(list.querySelectorAll('.beach-card'));
+    if (cards.length < 2) return;
+    const pos = {};
+    winterOrder.forEach(function (id, i) { pos[id] = i; });
+    cards.sort(function (a, b) { return (pos[a.dataset.id] ?? 999) - (pos[b.dataset.id] ?? 999); });
+    const medals = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
+    cards.forEach(function (card, i) {
+      list.appendChild(card);
+      const rank = i + 1;
+      card.classList.remove('top-rank', 'rank-1', 'rank-2', 'rank-3');
+      if (rank <= 3) card.classList.add('top-rank', 'rank-' + rank);
+      const r = card.querySelector('.rank');
+      if (r) r.innerHTML = rank <= 3 ? '<span class="medal">' + medals[rank - 1] + '</span>' : '#' + rank;
+    });
+  }
+  function applyWinterScore(card) {
+    if (!WINTER || !surfById || card.dataset.szn) return;
+    const id = card.dataset.id || card.id || (card.querySelector('[data-id]') || {}).dataset?.id;
+    const b = id ? surfById[id] : null;
+    if (!b || b.surfScoreWinter == null) return;
+    const scoreEl = card.querySelector('.score');
+    if (!scoreEl) return;
+    card.dataset.szn = '1';
+    scoreEl.innerHTML = b.surfScoreWinter + '<span class="surf-tag">SURF \u00B7 ' + (b.surfRating || '') + '</span>';
+  }
+  if (WINTER) {
+    const st = document.createElement('style');
+    st.textContent = '.score .surf-tag{display:block;font-size:0.55rem;font-weight:800;letter-spacing:0.08em;opacity:0.75;line-height:1.1;margin-top:2px;}';
+    document.head.appendChild(st);
+    new MutationObserver(function (muts) {
+      muts.forEach(function (m) {
+        m.addedNodes.forEach(function (n) {
+          if (n.nodeType !== 1) return;
+          if (n.classList && n.classList.contains('beach-card')) applyWinterScore(n);
+          else n.querySelectorAll && n.querySelectorAll('.beach-card').forEach(applyWinterScore);
+          if (winterOrder) clearTimeout(reorderT), reorderT = setTimeout(reorderForWinter, 60);
+        });
+      });
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  }
+
+  function init() { swapIntro(); fixBadgeLines(); mountHero(); mountTodo(); loadHero(); if (WINTER) loadWinterScores(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();
